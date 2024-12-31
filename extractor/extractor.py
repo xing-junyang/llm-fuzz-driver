@@ -1,6 +1,6 @@
 import os
 
-# may use `pip install clang` to install the package
+# may use `pip install libclang` to install the package
 from clang.cindex import Index, CursorKind
 
 context_lines = 5 # Number of context lines around the function call
