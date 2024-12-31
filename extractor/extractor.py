@@ -62,19 +62,7 @@ def parse_function_calls(node, function_calls, function_calls_signature):
             # Handle function pointer calls
             function_name = child.spelling
             if not function_name:
-                # Try to extract function pointer name
-                for token in child.get_tokens():
-                    if token.spelling.startswith('(*'):
-                        # Extract name between (* and )
-                        ptr_name = token.spelling[2:-1]  # Remove (* and )
-                        if '->' in ptr_name:  # Handle struct member access
-                            function_name = ptr_name.split('->')[1]
-                        else:
-                            function_name = ptr_name
-                        break
-
-            # Extract function call example: The context lines around the function call (must provide the index not
-            # overflows the list)
+                function_name = '(Anonymous Function)'
 
             parameters = []
             seen_line = [child.location.line]
@@ -98,18 +86,20 @@ def parse_function_calls(node, function_calls, function_calls_signature):
                     "seen_line": seen_line,
                 })
             else:
-                # Find the existing call and append the line number
+                # append the line number to the existing function call
                 for call in function_calls:
                     if call["function_name"] == function_name:
                         call["seen_line"].append(child.location.line)
                         break
 
-        # Recursively process child nodes
+        # recursively parse child nodes
         parse_function_calls(child, function_calls, function_calls_signature)
 
 def parse_main_function(main_node):
     """
-    Parse function call information within the main function.
+    Parse function call information within the main function. There are two main cases:
+    1. The main function contains function calls directly.
+    2. The main function contains a single function, and the function contains the actual function calls.
     Args:
         main_node (clang.cindex.Cursor): AST node of the main function.
     Returns:
@@ -124,12 +114,11 @@ def parse_main_function(main_node):
     # If the function_calls only contains a single function, that means the main function is actually in that function
     if len(function_calls) == 1:
         function_name = function_calls[0]["function_name"]
-        # Find the function node
         index = Index.create()
         translation_unit = index.parse(file_path)
         for node in translation_unit.cursor.get_children():
             if node.kind == CursorKind.FUNCTION_DECL and node.spelling == function_name:
-                # parse function calls within the main function
+                # parse function calls within the actual main function
                 function_calls = []
                 function_calls_signature = set()
                 parse_function_calls(node, function_calls, function_calls_signature)
@@ -156,7 +145,7 @@ def get_context_lines(file_path, line_number):
 # This will extract the interface information from the provided C file and output to a file.
 # You may have to extract the C file from the target project first.
 if __name__ == "__main__":
-    file_path = "../targets/unzipped/libxml2-2.13.4/xmllint.c"  # Replace with your C file path
+    file_path = "../targets/unzipped/libjpeg-turbo-3.0.4/djpeg.c"  # Replace with your C file path
     try:
         interfaces = extract_interface_info(file_path)
         # Output to file
