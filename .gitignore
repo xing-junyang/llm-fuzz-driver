@@ -1,1 +1,9 @@
+.idea
+.DS_Store
 .env
+targets/unzipped
+.idea/llm-fuzz-driver.iml
+.idea/misc.xml
+.gitignore
+/extractor/output.txt
+/targets

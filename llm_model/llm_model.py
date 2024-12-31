@@ -19,3 +19,10 @@ def generate_fuzz_driver_llm(prompt):
     )
 
     return response.choices[0].message.content
+
+if __name__ == "__main__":
+    with open("../prompt_generator/gpt_prompt.txt", "r") as f:
+        fread = f.read
+        prompt = fread()
+    response = generate_fuzz_driver_llm(prompt)
+    print(response)
