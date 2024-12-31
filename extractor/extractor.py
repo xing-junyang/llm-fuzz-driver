@@ -3,7 +3,7 @@ import os
 # may use `pip install libclang` to install the package
 from clang.cindex import Index, CursorKind
 
-context_lines = 5 # Number of context lines around the function call
+context_lines = 1 # Number of context lines around the function call
 
 def extract_interface_info(file_path):
     """

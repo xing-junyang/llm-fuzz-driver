@@ -58,8 +58,8 @@ class CandidateGenerator:
 #include <string.h>
 """
         # 添加项目特定的头文件
-        for header in api_info.get('required_headers', []):
-            headers += f'#include "{header}"\n'
+        # for header in api_info.get('required_headers', []):
+        #     headers += f'#include "{header}"\n'
 
         return headers + "\n" + code
 
