@@ -1,99 +1,85 @@
 import subprocess
 import logging
-from extractor.extractor import extract_interface_info  # Importing the extractor functions
-from prompt_generator.prompt_gen import generate_gpt_prompt, filter_interfaces  # Updated import for filtering
-from llm_model.llm_model import generate_fuzz_driver_llm  # Importing the function from llm_model.py
-from candidate_generator.candidate_gen import CandidateGenerator  # Assumes candidate_gen.py provides a class to generate fuzzing drivers
+import os
 
 class Validator:
-    def __init__(self, target_file: str, llvm_cov_path: str = 'llvm-cov'):
+    def __init__(self, target_file: str, llvm_cov_path: str = 'llvm-cov', coverage_threshold: float = 80.0,
+                 output_dir: str = './outputs', log_file: str = 'validation_log.txt'):
         self.target_file = target_file
         self.llvm_cov_path = llvm_cov_path
+        self.coverage_threshold = coverage_threshold  # 设置覆盖率阈值
+        self.output_dir = output_dir
+        self.log_file = log_file
         self.logger = logging.getLogger(__name__)
 
-    def generate_fuzz_driver(self, target_function: str) -> list:
-        """
-        Generate multiple fuzz testing driver variants using extracted API information.
-        """
-        try:
-            # Step 1: Extract API information using the APIExtractor (from extractor.py)
-            api_info = extract_interface_info(self.target_file)
+        # 配置日志输出到文件
+        logging.basicConfig(level=logging.INFO, filename=self.log_file, filemode='w',
+                            format='%(asctime)s - %(levelname)s - %(message)s')
 
-            # Step 2: Filter out excluded functions (from prompt_gen.py)
-            filtered_api_info = filter_interfaces(api_info)
+        # 创建输出目录结构
+        self.temp_dir = os.path.join(self.output_dir, 'temp')
+        self.coverage_dir = os.path.join(self.temp_dir, 'coverage')
+        self.error_log_dir = os.path.join(self.temp_dir, 'error_log')
+        self.validated_fuzz_drivers_dir = os.path.join(self.output_dir, 'validated_fuzz_drivers')
 
-            # Step 3: Generate prompt using the updated generate_gpt_prompt (from prompt_gen.py)
-            prompt = generate_gpt_prompt(filtered_api_info, self.target_file)
+        os.makedirs(self.coverage_dir, exist_ok=True)
+        os.makedirs(self.error_log_dir, exist_ok=True)
+        os.makedirs(self.validated_fuzz_drivers_dir, exist_ok=True)
 
-            # Step 4: Use LLM to generate fuzz driver code based on the prompt
-            llm_response = generate_fuzz_driver_llm(prompt)
-
-            if not llm_response:
-                raise Exception("Failed to generate fuzz driver from LLM response.")
-
-            # Step 5: Generate multiple fuzz driver variants using the CandidateGenerator (from candidate_gen.py)
-            candidate_gen = CandidateGenerator()
-            fuzz_drivers = candidate_gen.generate_multiple_variants(llm_response, filtered_api_info)
-
-            if not fuzz_drivers:
-                raise Exception("Failed to generate fuzz driver variants.")
-
-            self.logger.info(f"{len(fuzz_drivers)} fuzz driver variants generated successfully.")
-            return fuzz_drivers
-
-        except Exception as e:
-            self.logger.error(f"Error generating fuzz drivers: {str(e)}")
-            raise
-
-    def compile_with_coverage(self, fuzz_driver: str) -> str:
+    def compile_with_coverage(self, fuzz_driver_file: str) -> str | None:
         """
         Compile fuzz driver and target file with coverage instrumentation.
         """
         try:
-            # Compile the fuzz driver with target file
+            # 编译命令
             compile_command = [
-                'clang', '-g', '-fsanitize=fuzzer', '-fprofile-instr-generate',
-                '-fcoverage-mapping', '-o', 'fuzz_driver', self.target_file, '-c', '-std=c++11'
+                'clang', '-g', '-fsanitize=fuzzer', '-fsanitize=address', '-std=c11',
+                '-fprofile-instr-generate', '-fcoverage-mapping', '-o', 'fuzz_driver',
+                fuzz_driver_file, self.target_file, '-I/usr/include/libxml2',
+                '-L/usr/lib/x86_64-linux-gnu', '-lxml2'
             ]
 
-            # Write fuzz driver to a temporary file
-            with open("fuzz_driver.cpp", "w") as file:
-                file.write(fuzz_driver)
-
-            compile_command.append("fuzz_driver.cpp")
-
-            # Execute compilation
+            # 执行编译
             subprocess.run(compile_command, check=True)
             self.logger.info("Fuzz driver compiled with coverage.")
 
-            return 'fuzz_driver'
+            return fuzz_driver_file
 
-        except Exception as e:
-            self.logger.error(f"Error compiling fuzz driver: {str(e)}")
-            raise
+        except subprocess.CalledProcessError as e:
+            # 编译失败，保存错误信息到文件
+            error_log_path = os.path.join(self.error_log_dir, 'raw_error_log.txt')
+            self.logger.error(f"Compilation failed: {e}")
+            with open(error_log_path, "w") as error_file:
+                error_file.write(f"Compilation failed with error: {str(e)}\n")
+            return None
 
-    def run_fuzzing_and_measure_coverage(self, driver_file: str) -> float:
+    def run_fuzzing_and_measure_coverage(self) -> float:
         """
         Run fuzz testing and measure code coverage.
         """
         try:
-            # Run the fuzz driver
+            # 运行 fuzz 驱动
             run_command = ['./fuzz_driver']
             subprocess.run(run_command, check=True)
             self.logger.info("Fuzz driver executed.")
 
-            # Generate coverage report using llvm-cov
+            # 生成覆盖率报告
             llvm_cov_command = [
                 self.llvm_cov_path, 'gcov', 'fuzz_driver.profraw'
             ]
             subprocess.run(llvm_cov_command, check=True)
 
-            # Get the coverage report
+            # 获取覆盖率报告
             coverage_command = ['llvm-cov', 'report', 'fuzz_driver']
             result = subprocess.run(coverage_command, capture_output=True, text=True)
             self.logger.info("Coverage report generated.")
 
-            # Parse the report to extract the coverage percentage
+            # 保存覆盖率报告到文件
+            coverage_file_path = os.path.join(self.coverage_dir, 'raw_coverage.txt')
+            with open(coverage_file_path, "w") as coverage_file:
+                coverage_file.write(result.stdout)
+
+            # 解析报告以提取覆盖率百分比
             coverage_line = None
             for line in result.stdout.splitlines():
                 if "Total" in line:
@@ -112,30 +98,66 @@ class Validator:
             self.logger.error(f"Error during fuzzing and coverage measurement: {str(e)}")
             return 0.0
 
-    def validate_fuzzing(self, target_function: str) -> float:
+    def validate_fuzzing(self, driver_file: str) -> float:
         """
-        Full validation process: generate fuzz driver variants, compile, run fuzzing, and measure coverage for all variants.
+        Full validation process: compile, run fuzzing, and measure coverage.
         """
-        fuzz_drivers = self.generate_fuzz_driver(target_function)
-        total_coverage = 0.0
-        for fuzz_driver in fuzz_drivers:
-            compiled_driver = self.compile_with_coverage(fuzz_driver)
-            coverage_percentage = self.run_fuzzing_and_measure_coverage(compiled_driver)
-            total_coverage += coverage_percentage
+        try:
+            # 编译 fuzz 驱动
+            compiled_driver = self.compile_with_coverage(driver_file)
 
-        # Return average coverage across all variants
-        return total_coverage / len(fuzz_drivers) if fuzz_drivers else 0.0
+            # 运行 fuzzing 并测量覆盖率
+            coverage_percentage = self.run_fuzzing_and_measure_coverage()
 
+            # 如果覆盖率低于阈值，则保存详细覆盖率信息到文件
+            if coverage_percentage < self.coverage_threshold:
+                coverage_report_path = os.path.join(self.coverage_dir, 'coverage_report.txt')
+                with open(coverage_report_path, "w") as report_file:
+                    report_file.write(f"Coverage percentage: {coverage_percentage}%\n")
+                    report_file.write("Coverage report:\n")
+                    report_file.write(f"Details of {compiled_driver}:\n")
+                    report_file.write(str(compiled_driver))
+
+            # 如果覆盖率合格，保存验证过的 fuzz 驱动到 validated_fuzz_drivers 文件夹
+            if coverage_percentage >= self.coverage_threshold:
+                validated_driver_path = os.path.join(self.validated_fuzz_drivers_dir, 'validated_fuzz_driver.c')
+                with open(validated_driver_path, "w") as validated_file:
+                    with open(compiled_driver, "r") as driver:
+                        validated_file.write(driver.read())
+
+            return coverage_percentage
+
+        except Exception as e:
+            self.logger.error(f"Error during fuzzing validation: {str(e)}")
+            return 0.0
+
+
+# 提供可供外部调用的接口函数
+def validate_fuzzing_for_target(driver_file: str, target_file: str, llvm_cov_path: str = 'llvm-cov',
+                                coverage_threshold: float = 80.0, output_dir: str = './outputs',
+                                log_file: str = 'validation_log.txt') -> float:
+    """
+    Interface function for validating fuzzing and coverage for a given driver file and target file.
+    :param driver_file: Fuzz driver source code file path
+    :param target_file: Target file to be fuzzed
+    :param llvm_cov_path: Path to llvm-cov binary (default: 'llvm-cov')
+    :param coverage_threshold: Minimum acceptable coverage percentage (default: 80.0)
+    :param output_dir: Directory to store outputs (default: './outputs')
+    :param log_file: Log file to record logs (default: 'validation_log.txt')
+    :return: Coverage percentage achieved after fuzzing
+    """
+    validator = Validator(target_file, llvm_cov_path, coverage_threshold, output_dir, log_file)
+    return validator.validate_fuzzing(driver_file)
+
+
+# 示例：如何在其他程序中调用接口
 if __name__ == "__main__":
-    logging.basicConfig(level=logging.INFO)
+    # 假设 driver_file 和 target_file 传入
+    driver_file = ""  # 替换为你的 fuzz driver 文件路径
+    target_file = ""  # 替换为你的目标文件路径
 
-    # Example: target function and target file
-    target_function = "main"  # Replace with your function name
-    target_file = "D:\\文件\\大三上\\软件测试\\llm-fuzz-driver\\targets\\unzipped\\libjpeg-turbo-3.0.4\\djpeg.c"  # Replace with your file path
-
-    # Initialize the Validator and perform fuzzing validation
-    validator = Validator(target_file)
-    coverage = validator.validate_fuzzing(target_function)
+    # 调用接口进行 fuzz 验证
+    coverage = validate_fuzzing_for_target(driver_file, target_file)
 
     if coverage > 0:
         print(f"Fuzzing completed with {coverage}% code coverage.")
