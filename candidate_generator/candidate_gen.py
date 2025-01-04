@@ -3,6 +3,8 @@ from typing import Dict, List, Optional
 import re
 import logging
 
+import os
+
 
 class CandidateGenerator:
     def __init__(self):
@@ -37,11 +39,19 @@ class CandidateGenerator:
             # 格式化代码
             code = self._format_code(code)
 
+            # 将代码写入文件
+            output_path = '../outputs/temp/candidate_fuzz_drivers/raw.c'
+            os.makedirs(os.path.dirname(output_path), exist_ok=True)
+            with open(output_path, 'w') as file:
+                file.write(code)
+
             return code
 
         except Exception as e:
             self.logger.error(f"Error generating driver: {str(e)}")
             return None
+
+    # 其他方法保持不变
 
     def _extract_code(self, llm_response: str) -> Optional[str]:
         """提取LLM响应中的代码部分"""
@@ -185,62 +195,83 @@ static void cleanup() {
         return re.sub(fuzzer_pattern, f'\\1\n{insert_code}', code)
 
 
-
 if __name__ == "__main__":
     # Example usage
     llm_response = """
-为了生成一个测试驱动（fuzz target）用于与 libfuzzer 一起使用，你需要编写一个函数，该函数接收一个字节序列作为输入，并将其传递给你想要测试的函数。下面是一个简单的测试驱动示例，它将与上面的 `string_to_int` 函数一起使用。
-
 ```cpp
-// my_fuzz_target.cpp
-#include <cstdint>
-#include <cstddef>
-#include <string>
-#include "my_source.cpp"  // 包含上面提供的 string_to_int 函数
+extern "C" {
+    int LLVMFuzzerTestOneInput(const uint8_t *Data, size_t Size);
 
-// 这个函数是 libfuzzer 调用的目标函数
-// 它接收一个字节序列，并尝试将其转换为字符串，然后传递给 string_to_int 函数
-extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size) {
-    // 确保输入数据不为空
-    if (size == 0) {
-        return 0;
-    }
+    /* 
+    * Declare and initialize components to handle functions 
+    * This examples will only contain the skeletons required to create a fuzzer
+    */
 
-    // 将输入数据转换为字符串
-    // 注意：这里简单地将字节序列转换为字符串，没有进行任何错误检查
-    // 在实际应用中，你可能需要更复杂的处理来确保输入是有效的
-    std::string input(reinterpret_cast<const char*>(data), size);
+    // Function Declarations
+    void usage(FILE * stderr, const char * parameter);
+    void *__errno_location(void);
+    int parseInteger(const char*, const char*, unsigned long, unsigned long);
+    int skipArgs(const char*);
+    void xmlMemSetup(void (*)(void *), void *(*)(size_t), void *(*)(void *, size_t), char *(*)(const char *));
+    void xmlSetExternalEntityLoader(<dependent type>);
+    void startTimer(void);
+    void testSAX(const char*);
+    void endTimer(char *, int);
+    void xmlCleanupParser(void);
 
-    // 尝试调用 string_to_int 函数
-    try {
-        int result = string_to_int(input);
-        // 这里可以添加额外的逻辑来验证结果或进行其他操作
-        // 例如，检查 result 是否在预期的范围内
-    } catch (const std::exception& e) {
-        // 捕获并处理异常，例如打印错误信息
-        std::cerr << "Exception caught: " << e.what() << std::endl;
-    }
+    // Generate the Mock Functions
 
-    // 返回 0 表示测试用例被认为是有效的，但未发现错误
-    return 0;
+    void myFreeFunc(void *Ptr) { free(Ptr); }
+    void *myMallocFunc(size_t Size) { return malloc(Size); }
+    void *myReallocFunc(void *Ptr, size_t Size) { return realloc(Ptr, Size); }
+    char *myStrdupFunc(const char *Str) { return strdup(Str); }
+
+    <dependent type> xmllintExternalEntityLoader;
+}
+
+int LLVMFuzzerTestOneInput(const uint8_t *Data, size_t Size) {
+    if (Size < 3) return 0;  // Ensure there is enough data provided
+
+    char* NewData = (char*)malloc(Size+1);  // Create space for data copy
+    memcpy(NewData, Data, Size);            // Copy data
+    NewData[Size] = '\0';                   // Null-terminate the string
+
+    /* 
+    * Function Calls Here - pass fuzzed data.
+    * New data or part of it can be passed to the functions as required.
+    */
+
+    usage(NULL, NewData);  // Mock function without actual definition here
+
+    __errno_location();
+
+    int result  = sscanf(NewData, "%u", &val);
+    if (result > 0) // check to make sure a number was actually found in the data
+        parseInteger("maxmem", NewData, 0, INT_MAX);
+
+    skipArgs(NewData);
+
+    xmlMemSetup(myFreeFunc, myMallocFunc, myReallocFunc, myStrdupFunc);
+
+    // the procedure for xmlSetExternalEntityLoader function will be similar after appropriate extraction of right type from the NewData
+
+    startTimer();
+
+    testSAX(NewData);
+
+    endTimer("%d iterations", 1);
+
+    xmlCleanupParser();
+
+    free(NewData); // Always clean up created data to avoid any memory leaks
+
+    return 0;  // Non-zero return values are reserved for future use.
 }
 ```
-
-要编译这个测试驱动并链接 libfuzzer，你可以使用以下命令：
-
-```bash
-clang++ -fsanitize=fuzzer,address -o my_fuzz_target my_fuzz_target.cpp my_source.cpp
-```
-
-这里使用了 `-fsanitize=fuzzer,address` 选项，它不仅启用了 fuzzer，还启用了地址sanitizer，这有助于检测内存错误。
-
-一旦编译完成，你就可以运行生成的可执行文件，并让 libfuzzer 开始模糊测试：
-
-```bash
-./my_fuzz_target
-```
-
-libfuzzer 将自动生成随机输入并传递给 `LLVMFuzzerTestOneInput` 函数。如果 `string_to_int` 函数抛出异常或导致其他错误，libfuzzer 将捕获这些错误，并可能发现潜在的问题。
+Please note that:
+- Before using this code, you need to fill in the correct dependent type and implementation of `xmlSetExternalEntityLoader` and `xmllintExternalEntityLoader`.
+- Also, this code assumes that implementations of all these functions are written somewhere in your code or module.
+- The example does not cover wrapping up C functions in extern "C" in C++ code, please do so if you use C++ instead of C.
 """
     api_info = {
         "required_headers": ["my_header.h"]
@@ -249,6 +280,6 @@ libfuzzer 将自动生成随机输入并传递给 `LLVMFuzzerTestOneInput` 函�
     generator = CandidateGenerator()
     driver_code = generator.generate_driver(llm_response, api_info)
     print(driver_code)
-    variants = generator.generate_multiple_variants(llm_response, api_info)
-    for i, variant in enumerate(variants):
-        print(f"Variant {i + 1}:\n{variant}")
+    # variants = generator.generate_multiple_variants(llm_response, api_info)
+    # for i, variant in enumerate(variants):
+    #     print(f"Variant {i + 1}:\n{variant}")
