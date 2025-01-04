@@ -63,14 +63,16 @@ class Validator:
             subprocess.run(run_command, check=True)
             self.logger.info("Fuzz driver executed.")
 
-            # 生成覆盖率报告
+            # 生成覆盖率数据
             llvm_cov_command = [
                 self.llvm_cov_path, 'gcov', 'fuzz_driver.profraw'
             ]
             subprocess.run(llvm_cov_command, check=True)
 
             # 获取覆盖率报告
-            coverage_command = ['llvm-cov', 'report', 'fuzz_driver']
+            coverage_command = [
+                'llvm-cov', 'report', './fuzz_driver', '-instr-profile=default.profdata'
+            ]
             result = subprocess.run(coverage_command, capture_output=True, text=True)
             self.logger.info("Coverage report generated.")
 
