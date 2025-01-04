@@ -139,7 +139,7 @@ if __name__ == "__main__":
     filtered_interfaces = filter_interfaces(interfaces,'../targets/libxml2-2.13.4/xmllint.c')
 
     # Generate the GPT prompt
-    prompt = generate_gpt_prompt(filtered_interfaces, "libxml2-2.13.4", "xmllint", "../targets/libxml2-2.13.4/fuzz_driver.c")
+    prompt = generate_gpt_prompt(filtered_interfaces, "libxml2-2.13.4", "xmllint", "fuzz_driver.c")
 
     # Save to a file for inspection or further usage
     with open("gpt_prompt.txt", "w") as f:
