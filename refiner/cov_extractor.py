@@ -1,4 +1,8 @@
 import subprocess
+import logging
+
+# Configure logging
+logging.basicConfig(filename='coverage.log', level=logging.INFO, format='%(asctime)s - %(message)s')
 
 def check_coverage(file_path: str) -> bool:
     """
