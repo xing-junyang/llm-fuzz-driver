@@ -1,5 +1,3 @@
-import logging
-
 from candidate_generator.candidate_gen import CandidateGenerator
 from extractor.extractor import extract_interface_info
 from llm_model.llm_model import generate_fuzz_driver_llm
@@ -46,7 +44,8 @@ if __name__ == "__main__":
             file.write(driver_code)
 
         # validator
-        result = validate_driver("outputs/temp/candidate_fuzz_drivers/raw.c")
+        driver_file_name = 'raw.c'
+        result = validate_driver(driver_file_name)
 
         # check the result, perform refining if necessary
         if result == "Valid Driver":

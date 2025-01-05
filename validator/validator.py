@@ -5,7 +5,7 @@ import logging
 
 from refiner.cov_extractor import check_coverage
 
-def validate_driver(driver_file_path: str) -> str:
+def validate_driver(driver_file_name: str) -> str:
     """
     Validate the input driver. Return `Valid Driver`, `Compilation Error`, or `Low Coverage` according to the
     validation result.
@@ -21,11 +21,15 @@ def validate_driver(driver_file_path: str) -> str:
         satisfies the required threshold. If the coverage is less than the threshold, return `Low Coverage`.
         - If the driver is valid, return `Valid Driver`.
     """
+    log_file_path = '../outputs/temp/error_logs/raw_error_log.txt'
+    driver_file_path = f'../outputs/temp/candidate_fuzz_drivers/{driver_file_name}'
+    dir_path = os.path.dirname(log_file_path)
+    if not os.path.exists(dir_path):
+        os.makedirs(dir_path)
+    with open(log_file_path, 'w') as file:
+        file.write("")
 
-    log_file_path = 'outputs/temp/error_logs/raw_error_log.txt'
-    if not os.path.exists(log_file_path):
-        with open(log_file_path, 'w'):
-            pass
+    # Configure the logger
     logging.basicConfig(filename=log_file_path, level=logging.ERROR)
 
     # Step 1: Check if the driver file exists and is not empty
