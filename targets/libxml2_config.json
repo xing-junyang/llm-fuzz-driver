@@ -1,0 +1,22 @@
+{
+    "project_name": "libxml2",
+    "target_name": "xmllint",
+    "target_function": "main",
+    "target_file": "./targets/libxml2-2.13.4/xmllint.c",
+    "test_driver_model_code_path": "./prompt_generator/model.c",
+    "max_iterations": 10,
+    "compile_command": [
+        "clang",
+        "-g",
+        "-fsanitize=fuzzer",
+        "-fsanitize=address",
+        "-std=c11",
+        "-fprofile-instr-generate",
+        "-fcoverage-mapping",
+        "-o",
+        "fuzz_driver",
+        "xmllint_fuzz_driver.c",
+        "-I./include",
+        "./.libs/libxml2.a"
+    ]
+}
