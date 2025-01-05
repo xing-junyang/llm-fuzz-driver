@@ -87,7 +87,9 @@ def validate_driver(driver_file_path: str, compile_command: list) -> str:
 
     try:
         with open(coverage_report_path, 'w') as report_file:
-
+            subprocess.check_call([
+                'llvm-profdata', 'merge', '-sparse', 'default.profraw', '-o', 'default.profdata'
+            ], stdout=report_file)
             subprocess.check_call([
                 'echo', '"Detailed report:\n"'
             ], stdout=report_file)

@@ -170,7 +170,7 @@ def generate_compiler_error_prompt(driver_code,project_name, target, error_messa
     )
 
     # Insert the project-specific information
-    prompt += f"project_name: {project_name}\n\n"
+    prompt += f"project_name: {project_name}\n"
     prompt += f"target: {target}\n\n"
     return prompt
 
@@ -215,7 +215,7 @@ def gen_cov_improve_prompt(driver_code,project_name, target, coverage_report_pat
     )
 
     # Insert the project-specific information
-    prompt += f"project_name: {project_name}\n\n"
+    prompt += f"project_name: {project_name}\n"
     prompt += f"target: {target}\n\n"
     return prompt
 
