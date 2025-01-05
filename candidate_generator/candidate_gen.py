@@ -55,7 +55,7 @@ class CandidateGenerator:
 
     def _extract_code(self, llm_response: str) -> Optional[str]:
         """提取LLM响应中的代码部分"""
-        code_pattern = r"```(?:cpp|c)?\s*([\s\S]*?)\s*```"
+        code_pattern = r"```(?:cpp|c|C)?\s*([\s\S]*?)\s*```"
         matches = re.findall(code_pattern, llm_response)
         return matches[0] if matches else llm_response
 

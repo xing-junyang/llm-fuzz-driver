@@ -164,7 +164,40 @@ def generate_compiler_error_prompt(driver_code, error_message_file_path):
     )
     return prompt
 
+def gen_cov_improve_prompt(driver_code, coverage_report_path):
+    """
+    Generate a GPT prompt to refine a fuzzing driver based on low coverage.
+    Args:
+        driver_code (str): The original fuzzing driver code.
+        coverage_report_path (str): The path to the coverage report file.
+    Returns:
+        str: A GPT-friendly prompt for refining the driver.
+    """
+    try:
+        # Read the coverage report from the specified file
+        with open(coverage_report_path, 'r') as file:
+            coverage_report = file.read().strip()
+    except FileNotFoundError:
+        return f"Error: The file '{coverage_report_path}' does not exist."
+    except Exception as e:
+        return f"Error: An unexpected error occurred while reading the file: {e}"
 
+    # Generate the GPT-friendly prompt
+    prompt = (
+        "You are a code refinement assistant specializing in fuzzing drivers. "
+        "The user has provided a piece of C code intended to act as a fuzzing driver, "
+        "along with a coverage report indicating low code coverage. "
+        "Your task is to analyze the coverage report, identify the areas of low coverage, "
+        "and provide corrected code that improves the coverage.\n\n"
+        "Here is the fuzzing driver code:\n"
+        f"```\n{driver_code}\n```\n\n"
+        "Here is the coverage report:\n"
+        f"```\n{coverage_report}\n```\n\n"
+        "Please provide the following:\n"
+        "1. The corrected C code for the fuzzing driver that improves the code coverage.\n"
+        "Ensure that your explanation is clear and concise."
+    )
+    return prompt
 
 if __name__ == "__main__":
     file_path = "../targets/libjpeg-turbo-3.0.4/djpeg.c"
