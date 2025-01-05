@@ -15,12 +15,12 @@ if __name__ == "__main__":
 
     # extractor
     api_info = extract_interface_info(target_file)
+    filtered_api_info = filter_interfaces(api_info, target_file)
 
     state = "init"
 
     for i in range(max_iterations):
         # prompt_generator
-        filtered_api_info = filter_interfaces(api_info, target_file)
         prompt = ""
         if state == "init":
             prompt = generate_gpt_prompt(filtered_api_info, project_name, target_name, test_driver_model_code_path)
