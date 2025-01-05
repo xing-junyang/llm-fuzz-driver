@@ -2,7 +2,6 @@
 from typing import Dict, List, Optional
 import re
 import logging
-
 import os
 
 
@@ -51,25 +50,32 @@ class CandidateGenerator:
             self.logger.error(f"Error generating driver: {str(e)}")
             return None
 
-    # 其他方法保持不变
-
     def _extract_code(self, llm_response: str) -> Optional[str]:
         """提取LLM响应中的代码部分"""
-        code_pattern = r"```(?:cpp|c|C)?\s*([\s\S]*?)\s*```"
+        code_pattern = r"```(?:cpp|c)?\s*([\s\S]*?)\s*```"
         matches = re.findall(code_pattern, llm_response)
         return matches[0] if matches else llm_response
 
     def _add_headers(self, code: str, api_info: Dict) -> str:
         """添加必要的头文件"""
-        headers = """
-#include <stdint.h>
-#include <stddef.h>
-#include <stdlib.h>
-#include <string.h>
-"""
+        headers = """"""
+        # 添加项目特定的头文件
+        required_headers = [
+            "#include <stdint.h>",
+            "#include <stddef.h>",
+            "#include <stdlib.h>",
+            "#include <string.h>"
+        ]
+
+        # 检查是否已经存在头文件
+        for header in required_headers:
+            if header not in code:
+                headers += f"{header}\n"
+
         # 添加项目特定的头文件
         # for header in api_info.get('required_headers', []):
-        #     headers += f'#include "{header}"\n'
+        #     if f'#include "{header}"' not in code:
+        #         headers += f'#include "{header}"\n'
 
         return headers + "\n" + code
 
@@ -96,7 +102,9 @@ static void cleanup() {
     // Add cleanup logic here
 }
 """
-        return error_handling + "\n" + code
+        if(error_handling not in code):
+            code =error_handling+"\n"+code
+        return code
 
     def _format_code(self, code: str) -> str:
         """格式化代码，确保一致的风格"""
@@ -195,83 +203,77 @@ static void cleanup() {
         return re.sub(fuzzer_pattern, f'\\1\n{insert_code}', code)
 
 
+
 if __name__ == "__main__":
     # Example usage
     llm_response = """
-```cpp
-extern "C" {
-    int LLVMFuzzerTestOneInput(const uint8_t *Data, size_t Size);
+To create a test driver program, you would have to properly implement all the functions and calls as needed by your project. Below is an example of how such a driver could look like. Please note that due to the specificity and the complexity of the issue, the code provided might need extensive adaptations to reflect correctly your environment. 
 
-    /* 
-    * Declare and initialize components to handle functions 
-    * This examples will only contain the skeletons required to create a fuzzer
-    */
+```c
 
-    // Function Declarations
-    void usage(FILE * stderr, const char * parameter);
-    void *__errno_location(void);
-    int parseInteger(const char*, const char*, unsigned long, unsigned long);
-    int skipArgs(const char*);
-    void xmlMemSetup(void (*)(void *), void *(*)(size_t), void *(*)(void *, size_t), char *(*)(const char *));
-    void xmlSetExternalEntityLoader(<dependent type>);
-    void startTimer(void);
-    void testSAX(const char*);
-    void endTimer(char *, int);
-    void xmlCleanupParser(void);
+#define CHECK_NULL(ptr) if (ptr == NULL) { return 0; }
+#define CLEANUP_AND_RETURN(code) { cleanup(); return code; }
 
-    // Generate the Mock Functions
-
-    void myFreeFunc(void *Ptr) { free(Ptr); }
-    void *myMallocFunc(size_t Size) { return malloc(Size); }
-    void *myReallocFunc(void *Ptr, size_t Size) { return realloc(Ptr, Size); }
-    char *myStrdupFunc(const char *Str) { return strdup(Str); }
-
-    <dependent type> xmllintExternalEntityLoader;
+static void cleanup() {
+    // Add cleanup logic here
 }
 
-int LLVMFuzzerTestOneInput(const uint8_t *Data, size_t Size) {
-    if (Size < 3) return 0;  // Ensure there is enough data provided
+#include <stdint.h>
+#include <stddef.h>
 
-    char* NewData = (char*)malloc(Size+1);  // Create space for data copy
-    memcpy(NewData, Data, Size);            // Copy data
-    NewData[Size] = '\0';                   // Null-terminate the string
+#include <stdlib.h>
+#include <string.h>
+#include <jerror.h>
 
-    /* 
-    * Function Calls Here - pass fuzzed data.
-    * New data or part of it can be passed to the functions as required.
-    */
+// add custom headers
+#include "jpeglib.h"
+#include "jconfig.h"
 
-    usage(NULL, NewData);  // Mock function without actual definition here
+#define MAX_BUF_SIZE 1024
 
-    __errno_location();
+int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size) {
+    if (data == NULL || size == 0) {
+        return 0;
+    }
 
-    int result  = sscanf(NewData, "%u", &val);
-    if (result > 0) // check to make sure a number was actually found in the data
-        parseInteger("maxmem", NewData, 0, INT_MAX);
+    // create decompression structure
+    struct jpeg_decompress_struct *cinfo;
+    cinfo = malloc(sizeof(struct jpeg_decompress_struct));
+    jpeg_CreateDecompress(cinfo, JPEG_LIB_VERSION, sizeof(struct jpeg_decompress_struct));
 
-    skipArgs(NewData);
+    // allocate some space
+    JOCTET *outbuffer = malloc(MAX_BUF_SIZE);
+    if (outbuffer == NULL) {
+        exit(EXIT_FAILURE);
+    }
 
-    xmlMemSetup(myFreeFunc, myMallocFunc, myReallocFunc, myStrdupFunc);
+    // calling jpeg_mem_src
+    jpeg_mem_src(cinfo, outbuffer, MAX_BUF_SIZE);
 
-    // the procedure for xmlSetExternalEntityLoader function will be similar after appropriate extraction of right type from the NewData
+    jpeg_read_header(cinfo, TRUE);
+    jpeg_start_decompress(cinfo);
 
-    startTimer();
+    IOCTET *icc_profile;
+    unsigned int icc_profile_size;
+    jpeg_read_icc_profile(cinfo, &icc_profile, &icc_profile_size);
 
-    testSAX(NewData);
+    // Processing while can continue to read scanlines
+    while (cinfo->output_scanline < cinfo->output_height) {
+        // Allocate memory for buffers
+        JSAMPARRAY buffer = (*cinfo->mem->alloc_sarray)
+                ((j_common_ptr) &cinfo, JPOOL_IMAGE, cinfo->output_width * cinfo->output_components, 1);
+        jpeg_read_scanlines(cinfo, buffer, 1);
+    }
 
-    endTimer("%d iterations", 1);
+    jpeg_finish_decompress(cinfo);
+    jpeg_destroy_decompress(cinfo);
+    fclose(outbuffer);
+    free(outbuffer);
 
-    xmlCleanupParser();
-
-    free(NewData); // Always clean up created data to avoid any memory leaks
-
-    return 0;  // Non-zero return values are reserved for future use.
+    return 0;
 }
 ```
-Please note that:
-- Before using this code, you need to fill in the correct dependent type and implementation of `xmlSetExternalEntityLoader` and `xmllintExternalEntityLoader`.
-- Also, this code assumes that implementations of all these functions are written somewhere in your code or module.
-- The example does not cover wrapping up C functions in extern "C" in C++ code, please do so if you use C++ instead of C.
+This simple example does not cover all functions but should illustrate how fuzz testing with LibFuzzer might be implemented for the libjpeg-turbo project.
 """
     api_info = {
         "required_headers": ["my_header.h"]
