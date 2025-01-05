@@ -2,6 +2,8 @@ import json
 import os
 import sys
 
+from sympy.physics.units import current
+
 from candidate_generator.candidate_gen import CandidateGenerator
 from extractor.extractor import extract_interface_info
 from llm_model.llm_model import generate_fuzz_driver_llm
@@ -15,12 +17,12 @@ if __name__ == "__main__":
         sys.exit(1)
 
     # run the prebuild shell commands
-    prebuild_shell_path = sys.argv[2]  # Path to the prebuild shell script
-    if not os.path.exists(prebuild_shell_path):
-        print(f"Error: Prebuild shell script not found at {prebuild_shell_path}")
-        sys.exit(1)
-    os.system(f"cd {os.path.dirname(prebuild_shell_path)}"
-              f"&& bash {os.path.basename(prebuild_shell_path)}")
+    # prebuild_shell_path = sys.argv[2]  # Path to the prebuild shell script
+    # if not os.path.exists(prebuild_shell_path):
+    #     print(f"Error: Prebuild shell script not found at {prebuild_shell_path}")
+    #     sys.exit(1)
+    # os.system(f"cd {os.path.dirname(prebuild_shell_path)}"
+    #           f"&& bash {os.path.basename(prebuild_shell_path)}")
 
     # predefined variables
     json_file_path = sys.argv[1]  # Path to the json file containing the configuration
@@ -36,6 +38,7 @@ if __name__ == "__main__":
     test_driver_model_code_path = config["test_driver_model_code_path"]
     max_iterations = config["max_iterations"]
     compile_command = config["compile_command"]
+    current_file_path = os.path.dirname(os.path.abspath(__file__))
 
     # extractor
     api_info = extract_interface_info(target_file)
@@ -49,14 +52,14 @@ if __name__ == "__main__":
         if state == "init":
             prompt = generate_gpt_prompt(filtered_api_info, project_name, target_name, test_driver_model_code_path)
         elif state == "compile_err":
-            with open("outputs/temp/candidate_fuzz_drivers/raw.c", "r") as file:
+            with open(current_file_path + "/outputs/temp/candidate_fuzz_drivers/raw.c", "r") as file:
                 invalid_driver_code = file.read()
-            prompt = generate_compiler_error_prompt(invalid_driver_code, "outputs/temp/error_logs/raw_error_log.txt")
+            prompt = generate_compiler_error_prompt(invalid_driver_code,project_name, target_name, current_file_path+"/outputs/temp/error_logs/raw_error_log.txt")
         elif state == "low_cov":
-            with open("outputs/temp/candidate_fuzz_drivers/raw.c", "r") as file:
+            with open(current_file_path + "/outputs/temp/candidate_fuzz_drivers/raw.c", "r") as file:
                 invalid_driver_code = file.read()
-            prompt = gen_cov_improve_prompt(invalid_driver_code,
-                                            "outputs/temp/coverage_reports/raw_coverage_report.txt")
+            prompt = gen_cov_improve_prompt(invalid_driver_code,project_name, target_name,
+                                            current_file_path+"/outputs/temp/coverage/raw_coverage.txt")
 
         # llm_model
         llm_response = generate_fuzz_driver_llm(prompt)
@@ -68,17 +71,16 @@ if __name__ == "__main__":
         generator = CandidateGenerator()
         driver_code = generator.generate_driver(llm_response, api_info)
         # write the driver code to file: /outputs/temp/candidate_fuzz_drivers/raw.c
-        current_file_path = os.path.dirname(os.path.abspath(__file__))
         output_path = current_file_path + '/outputs/temp/candidate_fuzz_drivers/raw.c'
         os.makedirs(os.path.dirname(output_path), exist_ok=True)
-        with open("outputs/temp/candidate_fuzz_drivers/raw.c", "w") as file:
+        with open(current_file_path + "/outputs/temp/candidate_fuzz_drivers/raw.c", "w") as file:
             file.write(driver_code)
 
         # validator
         # copy the generated driver to the target directory and set the driver_file_path
         target_directory = os.path.dirname(target_file)
-        driver_file_path = target_directory + "/driver.c"
-        os.system(f"cp outputs/temp/candidate_fuzz_drivers/raw.c {driver_file_path}")
+        driver_file_path = current_file_path + "/" + target_directory + "/driver.c"
+        os.system(f"cp {current_file_path}/outputs/temp/candidate_fuzz_drivers/raw.c {driver_file_path}")
         result = validate_driver(driver_file_path, compile_command)
 
         # check the result, perform refining if necessary

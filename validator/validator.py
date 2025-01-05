@@ -21,7 +21,6 @@ def validate_driver(driver_file_path: str, compile_command: list) -> str:
     """
     current_file_path = os.path.dirname(os.path.abspath(__file__))
     log_file_path = current_file_path + '/../outputs/temp/error_logs/raw_error_log.txt'
-    # driver_file_path = current_file_path + f'/../outputs/temp/candidate_fuzz_drivers/{driver_file_name}'
     dir_path = os.path.dirname(log_file_path)
 
     # 创建并初始化普通日志文件
@@ -52,11 +51,6 @@ def validate_driver(driver_file_path: str, compile_command: list) -> str:
         return "Compilation Error"
 
     # Step 2: Try to compile the driver code
-    # compile_command = [
-    #     "clang", "-g", "-fsanitize=fuzzer", "-fsanitize=address", "-std=c11", "-fprofile-instr-generate",
-    #     "-fcoverage-mapping",
-    #     "-o", "fuzz_driver", driver_file_path, "-I/usr/include/libxml2", "-L/usr/lib/x86_64-linux-gnu", "-lxml2"
-    # ]
     try:
         os.chdir(os.path.dirname(driver_file_path))
         subprocess.check_output(compile_command, stderr=subprocess.STDOUT)  # 将stderr合并到stdout中
@@ -69,13 +63,23 @@ def validate_driver(driver_file_path: str, compile_command: list) -> str:
 
     # Step 3: Try to run the driver code
     try:
-        subprocess.check_call(["./driver"])
+        env = os.environ.copy()
+        env["LLVM_PROFILE_FILE"] = "default.profraw"
+        # 运行命令
+        subprocess.check_call(['./driver', '-max_total_time=60'], env=env)
     except subprocess.CalledProcessError as e:
         with open(log_file_path, 'a') as log_file:
             log_file.write(f"Runtime error for {driver_file_path}: {e}\n")
         return "Runtime Error"
 
     # Step 4: Generate the coverage report using llvm-cov
+    coverage_report_dir_path = current_file_path + '/../outputs/temp/coverage/'
+    # 创建并初始化普通日志文件
+    if not os.path.exists(coverage_report_dir_path):
+        print(f"Directory {coverage_report_dir_path} does not exist. Creating...")
+        os.makedirs(coverage_report_dir_path, exist_ok=True)  # 确保安全创建
+    else:
+        print(f"Directory {coverage_report_dir_path} already exists.")
     coverage_report_path = current_file_path + '/../outputs/temp/coverage/raw_coverage.txt'
     if not os.path.exists(coverage_report_path):
         with open(coverage_report_path, 'w'):  # 创建一个空文件
@@ -83,9 +87,20 @@ def validate_driver(driver_file_path: str, compile_command: list) -> str:
 
     try:
         with open(coverage_report_path, 'w') as report_file:
+
             subprocess.check_call([
-                'llvm-cov', 'report', './fuzz_driver',
-                '-instr-profile=default.profdata'
+                'echo', '"Detailed report:\n"'
+            ], stdout=report_file)
+            subprocess.check_call([
+                'llvm-cov','show', './driver',
+                '-instr-profile=default.profdata',
+            ], stdout=report_file)
+            subprocess.check_call([
+                'echo', '"Summary report:\n"'
+            ], stdout=report_file)
+            subprocess.check_call([
+                'llvm-cov', 'report', './driver',
+                '-instr-profile=default.profdata',
             ], stdout=report_file)
     except subprocess.CalledProcessError as e:
         with open(log_file_path, 'a') as log_file:

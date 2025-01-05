@@ -129,7 +129,7 @@ def generate_gpt_prompt(interfaces, project_name, target, test_driver_model_code
 
     return prompt
 
-def generate_compiler_error_prompt(driver_code, error_message_file_path):
+def generate_compiler_error_prompt(driver_code,project_name, target, error_message_file_path):
     """
     Generate a GPT prompt to refine a fuzzing driver based on a compiler error.
     Args:
@@ -150,7 +150,7 @@ def generate_compiler_error_prompt(driver_code, error_message_file_path):
     # Generate the GPT-friendly prompt
     prompt = (
         "You are a code refinement assistant specializing in fuzzing drivers. "
-        "The user has provided a piece of C code intended to act as a fuzzing driver, "
+        "The user has provided a piece of C code intended to act as a fuzzing driver by using libFuzzer, "
         "along with a compiler error message encountered during compilation. "
         "Your task is to analyze the error message, identify the issues, and provide "
         "corrected code that compiles successfully.\n\n"
@@ -160,11 +160,21 @@ def generate_compiler_error_prompt(driver_code, error_message_file_path):
         f"```\n{error_message}\n```\n\n"
         "Please provide the following:\n"
         "1. The corrected C code for the fuzzing driver.\n"
-        "Ensure that your explanation is clear and concise."
+        "**Ensure that your response only contains the corrected code.**"
     )
+
+    prompt += "\n\n"
+
+    prompt += (
+        "Here are the additional project details:\n\n"
+    )
+
+    # Insert the project-specific information
+    prompt += f"project_name: {project_name}\n\n"
+    prompt += f"target: {target}\n\n"
     return prompt
 
-def gen_cov_improve_prompt(driver_code, coverage_report_path):
+def gen_cov_improve_prompt(driver_code,project_name, target, coverage_report_path):
     """
     Generate a GPT prompt to refine a fuzzing driver based on low coverage.
     Args:
@@ -195,8 +205,18 @@ def gen_cov_improve_prompt(driver_code, coverage_report_path):
         f"```\n{coverage_report}\n```\n\n"
         "Please provide the following:\n"
         "1. The corrected C code for the fuzzing driver that improves the code coverage.\n"
-        "Ensure that your explanation is clear and concise."
+        "**Ensure that your explanation is clear and concise.**"
     )
+
+    prompt += "\n\n"
+
+    prompt += (
+        "Here are the additional project details:\n\n"
+    )
+
+    # Insert the project-specific information
+    prompt += f"project_name: {project_name}\n\n"
+    prompt += f"target: {target}\n\n"
     return prompt
 
 if __name__ == "__main__":
