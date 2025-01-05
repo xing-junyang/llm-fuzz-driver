@@ -58,6 +58,7 @@ def validate_driver(driver_file_path: str, compile_command: list) -> str:
     #     "-o", "fuzz_driver", driver_file_path, "-I/usr/include/libxml2", "-L/usr/lib/x86_64-linux-gnu", "-lxml2"
     # ]
     try:
+        os.chdir(os.path.dirname(driver_file_path))
         subprocess.check_output(compile_command, stderr=subprocess.STDOUT)  # 将stderr合并到stdout中
     except subprocess.CalledProcessError as e:
         error_message = e.output.decode() if e.output else "No output captured"
