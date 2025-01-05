@@ -1,9 +1,10 @@
-#include <libxml/parser.h>
-#include <libxml/tree.h>
-#include <libxml/xmlmemory.h>
-#include <libxml/xmlschemas.h>
+#include "libxml/parser.h"
+#include "libxml/tree.h"
+#include "libxml/xmlmemory.h"
+#include "libxml/xmlschemas.h"
 #include <stdlib.h>
 #include <string.h>
+#include <stdint.h>
 
 void* myMallocFunc(size_t size) {
     return malloc(size);

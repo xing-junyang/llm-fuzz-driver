@@ -5,7 +5,7 @@ from sympy.physics.units import degree
 from extractor.extractor import extract_interface_info
 
 # Define a list of excluded C library functions
-EXCLUDED_FUNCTIONS = {"strcmp", "fprintf", "malloc", "free", "memcpy", "strlen", "printf","endTimer","__errno_location","(Anonymous Function)","fwrite","fread"}
+EXCLUDED_FUNCTIONS = {"strcmp", "fprintf", "malloc", "free", "memcpy", "strlen", "printf","endTimer","__errno_location","(Anonymous Function)","fwrite","fread","fmemopen"}
 
 
 def extract_static_or_macro_functions(file_path):
@@ -200,17 +200,16 @@ def gen_cov_improve_prompt(driver_code, coverage_report_path):
     return prompt
 
 if __name__ == "__main__":
-    file_path = "../targets/libjpeg-turbo-3.0.4/djpeg.c"
-    template_path = "test_driver_template.c"  # Path to the test driver template file
+    file_path = "../targets/libpng-1.6.29/contrib/libtests/readpng.c"
 
     # Extract the interfaces from the source file
     interfaces = extract_interface_info(file_path)
 
     # Filter out excluded functions
-    filtered_interfaces = filter_interfaces(interfaces,'../targets/libjpeg-turbo-3.0.4/djpeg.c')
+    filtered_interfaces = filter_interfaces(interfaces,file_path)
 
     # Generate the GPT prompt
-    prompt = generate_gpt_prompt(filtered_interfaces, "libjepg-turbo-3.0.4", "djepg", "model.c")
+    prompt = generate_gpt_prompt(filtered_interfaces, "libpng-1.6.29", "pngread", "model.c")
 
     # Save to a file for inspection or further usage
     with open("gpt_prompt.txt", "w") as f:

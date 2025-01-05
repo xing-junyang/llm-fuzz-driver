@@ -1,8 +1,22 @@
 #include <stdlib.h>
 #include <stdint.h>
-#include <stdio.h>   // 定义 FILE 类型
+#include <stdio.h>
 #include <string.h>
-#include "jpeglib.h" // libjpeg 库的主头文件
+#include "jpeglib.h"
+#include <setjmp.h> // 用于错误跳转
+
+// 自定义错误处理结构
+struct custom_error_mgr {
+    struct jpeg_error_mgr pub; // 基本错误管理结构
+    jmp_buf setjmp_buffer;     // 用于跳转的缓冲区
+};
+
+// 自定义错误处理函数
+void custom_error_exit(j_common_ptr cinfo) {
+    struct custom_error_mgr *myerr = (struct custom_error_mgr *)cinfo->err;
+    // 跳转到设置的错误处理位置
+    longjmp(myerr->setjmp_buffer, 1);
+}
 
 // LibFuzzer 测试入口点
 int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size) {
@@ -12,10 +26,18 @@ int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size) {
 
     // 初始化 JPEG 解压缩结构体
     struct jpeg_decompress_struct cinfo;
-    struct jpeg_error_mgr jerr;
+    struct custom_error_mgr jerr;
 
-    // 设置默认错误处理程序
-    cinfo.err = jpeg_std_error(&jerr);
+    // 设置自定义错误处理程序
+    cinfo.err = jpeg_std_error(&jerr.pub);
+    jerr.pub.error_exit = custom_error_exit;
+
+    // 设置错误处理跳转点
+    if (setjmp(jerr.setjmp_buffer)) {
+        // 如果触发错误跳转，清理资源并返回
+        jpeg_destroy_decompress(&cinfo);
+        return 0;
+    }
 
     // 创建解压缩对象
     jpeg_create_decompress(&cinfo);
