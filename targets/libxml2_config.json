@@ -4,7 +4,7 @@
     "target_function": "main",
     "target_file": "./targets/libxml2-2.13.4/xmllint.c",
     "test_driver_model_code_path": "./prompt_generator/model.c",
-    "max_iterations": 10,
+    "max_iterations": 20,
     "compile_command": [
         "/usr/bin/clang",
         "-g",

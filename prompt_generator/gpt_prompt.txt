@@ -1,0 +1,89 @@
+You are a code assistant specializing in fuzz testing. Your task is to create a unified test driver program using LibFuzzer to test functions in the project. Below are the project details:
+
+project_name: libpng-1.6.29
+
+target: pngread
+
+The test driver program should:
+1. Be compatible with LibFuzzer.
+2. Test the following functions (excluding system call functions, standard input and output, etc. and well-tested library functions)
+
+### Function Name: png_create_read_struct
+Parameters:
+- png_const_charp 
+- png_voidp 
+- png_error_ptr 
+- png_error_ptr 
+
+### Function Name: _setjmp
+Parameters:
+- <dependent type> 
+
+### Function Name: png_init_io
+Parameters:
+- png_structp png_ptr
+- FILE * fp
+
+### Function Name: png_create_info_struct
+Parameters:
+- const png_struct * png_ptr
+
+### Function Name: png_error
+Parameters:
+- const png_struct * png_ptr
+- png_const_charp 
+
+### Function Name: png_read_info
+Parameters:
+- png_structp png_ptr
+- png_infop info_ptr
+
+### Function Name: png_get_rowbytes
+Parameters:
+- const png_struct * png_ptr
+- const png_info * info_ptr
+
+### Function Name: png_set_interlace_handling
+Parameters:
+- png_structp png_ptr
+
+### Function Name: png_start_read_image
+Parameters:
+- png_structp png_ptr
+
+### Function Name: png_read_row
+Parameters:
+- png_structp png_ptr
+- png_bytep row
+- png_bytep display
+
+### Function Name: png_read_end
+Parameters:
+- png_structp png_ptr
+- png_infop info_ptr
+
+Use the following code template as a guide for structuring the test driver:
+
+#include <stdlib.h>
+#include <string.h>
+//add testfunction lib
+
+// LibFuzzer 测试入口
+int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size) {
+    if (data == NULL || size == 0) {
+        return 0;
+    }
+
+    return 0;
+}
+
+
+Based on the above information, generate a single test driver program that:
+1. Implements a LibFuzzer-compatible entry point (LLVMFuzzerTestOneInput).
+2. Fuzzes all the above functions by:
+   - Extracting parameter values from the fuzzed input.
+   - Calling each function with appropriate parameters.
+3. Incorporates project-specific constraints and best practices.
+4. Handles edge cases and invalid inputs gracefully.
+
+Provide the complete C code for the test driver. Don't generate anything other than the C code.

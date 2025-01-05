@@ -7,6 +7,11 @@ A LLM based fuzz-driver generation tool.
 
 ## How to Run
 
+First, create an `.env` file in the root directory of the project. The `.env` file should contain the following fields:
+```bash
+OPENAI_API_KEY=<your_openai_api_key>
+```
+
 Set the configuration in `config.json` file. An example configuration file (for `libxml2/xmllint`) is as follows:
 
 ```json
@@ -67,6 +72,16 @@ After you set up, run the tool with the following command:
 python3 main.py <config_file_path> <prebuild_shell_path>
 ```
 
+## Examples
+
+We provide three examples with configuration files and prebuild shell scripts. They are as follows:
+
+| Example Name And Target | Configuration File | Prebuild Shell Script | 
+|-------------------------|--------------------|-----------------------|
+| `libxml2/xmllint`       | `./targets/libxml2_config.json` | `./targets/libxml2_prebuild.sh` |
+| `libjpeg/djpeg`         | `./targets/libjpeg_config.json` | `./targets/libjpeg_prebuild.sh` |
+| `libpng/pngread`            | `./targets/libpng_config.json` | `./targets/libpng_prebuild.sh` |
+
 ## Output Directory Structure
 
 The `outputs` directory is where the generated files are stored. The whole directory is automatically created by the 
@@ -80,18 +95,10 @@ tool **on runtime**. The directory structure is as follows:
     │   └── ...
     └── temp
         ├── candidate_fuzz_drivers
-        │   ├── raw.c
-        │   ├── mutant_1.c
-        │   ├── mutant_2.c
-        │   └── ...
+        │   └── raw.c  (raw candidate fuzz driver)
         ├── coverage
-        │   ├── raw_coverage.txt
-        │   ├── mutant_1_coverage.txt
-        │   ├── mutant_2_coverage.txt
-        │   └── ...
+        │   └── raw_coverage.txt  (coverage of raw candidate fuzz driver)
         └── error_log
-            ├── raw_error_log.txt
-            ├── mutant_1_error_log.txt
-            ├── mutant_2_error_log.txt
-            └── ...
+            └── raw_error_log.txt  (error log of raw candidate fuzz driver)
 ```
+

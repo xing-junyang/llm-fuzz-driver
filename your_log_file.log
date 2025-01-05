@@ -1,0 +1,34 @@
+2025-01-05 16:46:13,805 - ERROR - Compilation error for ../outputs/temp/candidate_fuzz_drivers/raw.c: Command '['clang', '-g', '-fsanitize=fuzzer', '-fsanitize=address', '-std=c11', '-fprofile-instr-generate', '-fcoverage-mapping', '-o', 'fuzz_driver', '../outputs/temp/candidate_fuzz_drivers/raw.c', '-I/usr/include/libxml2', '-L/usr/lib/x86_64-linux-gnu', '-lxml2']' returned non-zero exit status 1.
+2025-01-05 16:47:47,823 - ERROR - Compilation error for ../outputs/temp/candidate_fuzz_drivers/raw.c: Command '['clang', '-g', '-fsanitize=fuzzer', '-fsanitize=address', '-std=c11', '-fprofile-instr-generate', '-fcoverage-mapping', '-o', 'fuzz_driver', '../outputs/temp/candidate_fuzz_drivers/raw.c', '-I/usr/include/libxml2', '-L/usr/lib/x86_64-linux-gnu', '-lxml2']' returned non-zero exit status 1.
+2025-01-05 16:47:48,308 - ERROR - Error details: In file included from ../outputs/temp/candidate_fuzz_drivers/raw.c:16:
+In file included from /usr/include/libxml2/libxml/xmlmemory.h:218:
+In file included from /usr/include/libxml2/libxml/threads.h:35:
+In file included from /usr/include/libxml2/libxml/globals.h:18:
+In file included from /usr/include/libxml2/libxml/parser.h:812:
+/usr/include/libxml2/libxml/encoding.h:31:10: fatal error: 'unicode/ucnv.h' file not found
+#include <unicode/ucnv.h>
+         ^~~~~~~~~~~~~~~~
+1 error generated.
+
+2025-01-05 16:48:23,560 - ERROR - Compilation error for ../outputs/temp/candidate_fuzz_drivers/raw.c: Command '['clang', '-g', '-fsanitize=fuzzer', '-fsanitize=address', '-std=c11', '-fprofile-instr-generate', '-fcoverage-mapping', '-o', 'fuzz_driver', '../outputs/temp/candidate_fuzz_drivers/raw.c', '-I/usr/include/libxml2', '-L/usr/lib/x86_64-linux-gnu', '-lxml2']' returned non-zero exit status 1.
+2025-01-05 16:48:23,560 - ERROR - Error details: In file included from ../outputs/temp/candidate_fuzz_drivers/raw.c:16:
+In file included from /usr/include/libxml2/libxml/xmlmemory.h:218:
+In file included from /usr/include/libxml2/libxml/threads.h:35:
+In file included from /usr/include/libxml2/libxml/globals.h:18:
+In file included from /usr/include/libxml2/libxml/parser.h:812:
+/usr/include/libxml2/libxml/encoding.h:31:10: fatal error: 'unicode/ucnv.h' file not found
+#include <unicode/ucnv.h>
+         ^~~~~~~~~~~~~~~~
+1 error generated.
+
+2025-01-05 16:48:53,188 - ERROR - Compilation error for ../outputs/temp/candidate_fuzz_drivers/raw.c: Command '['clang', '-g', '-fsanitize=fuzzer', '-fsanitize=address', '-std=c11', '-fprofile-instr-generate', '-fcoverage-mapping', '-o', 'fuzz_driver', '../outputs/temp/candidate_fuzz_drivers/raw.c', '-I/usr/include/libxml2', '-L/usr/lib/x86_64-linux-gnu', '-lxml2']' returned non-zero exit status 1.
+2025-01-05 16:48:53,188 - ERROR - Error details: In file included from ../outputs/temp/candidate_fuzz_drivers/raw.c:16:
+In file included from /usr/include/libxml2/libxml/xmlmemory.h:218:
+In file included from /usr/include/libxml2/libxml/threads.h:35:
+In file included from /usr/include/libxml2/libxml/globals.h:18:
+In file included from /usr/include/libxml2/libxml/parser.h:812:
+/usr/include/libxml2/libxml/encoding.h:31:10: fatal error: 'unicode/ucnv.h' file not found
+#include <unicode/ucnv.h>
+         ^~~~~~~~~~~~~~~~
+1 error generated.
+

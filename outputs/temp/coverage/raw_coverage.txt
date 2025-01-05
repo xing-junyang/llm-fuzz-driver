@@ -1,0 +1,226 @@
+"Detailed report:
+"
+/home/nomad/llm-fuzz-driver/targets/libxml2-2.13.4/driver.c:
+    1|       |
+    2|       |#include <libxml/parser.h>
+    3|       |#include <libxml/xmlmemory.h>
+    4|       |#include <stdint.h>
+    5|       |#include <stddef.h>
+    6|       |#include <stdlib.h>
+    7|       |#include <string.h>
+    8|       |
+    9|       |#define CHECK_NULL(ptr) if (ptr == NULL) { return 0; }
+   10|  1.56M|#define CLEANUP_AND_RETURN(code) { cleanup(); return code; }
+   11|       |
+   12|  1.56M|static void cleanup() {
+   13|       |    // Add cleanup logic here
+   14|  1.56M|}
+   15|       |
+   16|  42.0M|void myFreeFunc(void *mem) {
+   17|  42.0M|    free(mem);
+   18|  42.0M|}
+   19|       |
+   20|   298k|char* myStrdupFunc(const char *str) {
+   21|   298k|    char *copy = (char *)malloc(strlen(str) + 1);
+   22|   298k|    if (copy) {
+   23|   298k|        strcpy(copy, str);
+   24|   298k|    }
+   25|   298k|    return copy;
+   26|   298k|}
+   27|       |
+   28|  1.56M|int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size) {
+   29|  1.56M|    if (data == NULL || size == 0) {
+   30|      1|        CLEANUP_AND_RETURN(0);
+   31|      0|    }
+   32|       |
+   33|       |    // Create a copy of the data as a null-terminated string
+   34|  1.56M|    char* null_terminated_data = (char*)malloc(size + 1);
+   35|  1.56M|    if (null_terminated_data == NULL) {
+   36|      0|        CLEANUP_AND_RETURN(0);
+   37|      0|    }
+   38|  1.56M|    memcpy(null_terminated_data, data, size);
+   39|  1.56M|    null_terminated_data[size] = '\0';
+   40|       |
+   41|       |    // Use first byte of data to switch between different functions to be fuzzed
+   42|  1.56M|    switch (data[0] % 4) { // Increase number of cases
+   43|   262k|        case 0:
+   44|   262k|            xmlMemSetup(myFreeFunc, malloc, realloc, myStrdupFunc);
+   45|   262k|            break;
+   46|   151k|        case 1:
+   47|   151k|            xmlSetExternalEntityLoader(xmlNoNetExternalEntityLoader);
+   48|   151k|            break;
+   49|   857k|        case 2:
+   50|   857k|            {
+   51|   857k|                xmlParserCtxtPtr ctxt = xmlCreateDocParserCtxt(BAD_CAST null_terminated_data);
+   52|   857k|                if (ctxt != NULL) {
+   53|   857k|                    xmlParseDocument(ctxt);
+   54|   857k|                    xmlFreeDoc(ctxt->myDoc);
+   55|   857k|                    xmlFreeParserCtxt(ctxt);
+   56|   857k|                }
+   57|   857k|            }
+   58|   857k|            break;
+   59|   298k|        case 3: 
+   60|   298k|            { 
+   61|   298k|                char *dup_val = myStrdupFunc(null_terminated_data); 
+   62|   298k|                myFreeFunc(dup_val); 
+   63|   298k|            } 
+   64|   298k|            break; 
+   65|  1.56M|    }
+   66|       |
+   67|  1.56M|    xmlCleanupParser();
+   68|  1.56M|    free(null_terminated_data);
+   69|  1.56M|    CLEANUP_AND_RETURN(0);
+   70|      0|}
+
+/home/nomad/llm-fuzz-driver/targets/libxml2-2.13.4/include/libxml/xmlstring.h:
+    1|       |/*
+    2|       | * Summary: set of routines to process strings
+    3|       | * Description: type and interfaces needed for the internal string handling
+    4|       | *              of the library, especially UTF8 processing.
+    5|       | *
+    6|       | * Copy: See Copyright for the status of this software.
+    7|       | *
+    8|       | * Author: Daniel Veillard
+    9|       | */
+   10|       |
+   11|       |#ifndef __XML_STRING_H__
+   12|       |#define __XML_STRING_H__
+   13|       |
+   14|       |#include <stdarg.h>
+   15|       |#include <libxml/xmlversion.h>
+   16|       |
+   17|       |#ifdef __cplusplus
+   18|       |extern "C" {
+   19|       |#endif
+   20|       |
+   21|       |/**
+   22|       | * xmlChar:
+   23|       | *
+   24|       | * This is a basic byte in an UTF-8 encoded string.
+   25|       | * It's unsigned allowing to pinpoint case where char * are assigned
+   26|       | * to xmlChar * (possibly making serialization back impossible).
+   27|       | */
+   28|       |typedef unsigned char xmlChar;
+   29|       |
+   30|       |/**
+   31|       | * BAD_CAST:
+   32|       | *
+   33|       | * Macro to cast a string to an xmlChar * when one know its safe.
+   34|       | */
+   35|   857k|#define BAD_CAST (xmlChar *)
+   36|       |
+   37|       |/*
+   38|       | * xmlChar handling
+   39|       | */
+   40|       |XMLPUBFUN xmlChar *
+   41|       |                xmlStrdup                (const xmlChar *cur);
+   42|       |XMLPUBFUN xmlChar *
+   43|       |                xmlStrndup               (const xmlChar *cur,
+   44|       |                                         int len);
+   45|       |XMLPUBFUN xmlChar *
+   46|       |                xmlCharStrndup           (const char *cur,
+   47|       |                                         int len);
+   48|       |XMLPUBFUN xmlChar *
+   49|       |                xmlCharStrdup            (const char *cur);
+   50|       |XMLPUBFUN xmlChar *
+   51|       |                xmlStrsub                (const xmlChar *str,
+   52|       |                                         int start,
+   53|       |                                         int len);
+   54|       |XMLPUBFUN const xmlChar *
+   55|       |                xmlStrchr                (const xmlChar *str,
+   56|       |                                         xmlChar val);
+   57|       |XMLPUBFUN const xmlChar *
+   58|       |                xmlStrstr                (const xmlChar *str,
+   59|       |                                         const xmlChar *val);
+   60|       |XMLPUBFUN const xmlChar *
+   61|       |                xmlStrcasestr            (const xmlChar *str,
+   62|       |                                         const xmlChar *val);
+   63|       |XMLPUBFUN int
+   64|       |                xmlStrcmp                (const xmlChar *str1,
+   65|       |                                         const xmlChar *str2);
+   66|       |XMLPUBFUN int
+   67|       |                xmlStrncmp               (const xmlChar *str1,
+   68|       |                                         const xmlChar *str2,
+   69|       |                                         int len);
+   70|       |XMLPUBFUN int
+   71|       |                xmlStrcasecmp            (const xmlChar *str1,
+   72|       |                                         const xmlChar *str2);
+   73|       |XMLPUBFUN int
+   74|       |                xmlStrncasecmp           (const xmlChar *str1,
+   75|       |                                         const xmlChar *str2,
+   76|       |                                         int len);
+   77|       |XMLPUBFUN int
+   78|       |                xmlStrEqual              (const xmlChar *str1,
+   79|       |                                         const xmlChar *str2);
+   80|       |XMLPUBFUN int
+   81|       |                xmlStrQEqual             (const xmlChar *pref,
+   82|       |                                         const xmlChar *name,
+   83|       |                                         const xmlChar *str);
+   84|       |XMLPUBFUN int
+   85|       |                xmlStrlen                (const xmlChar *str);
+   86|       |XMLPUBFUN xmlChar *
+   87|       |                xmlStrcat                (xmlChar *cur,
+   88|       |                                         const xmlChar *add);
+   89|       |XMLPUBFUN xmlChar *
+   90|       |                xmlStrncat               (xmlChar *cur,
+   91|       |                                         const xmlChar *add,
+   92|       |                                         int len);
+   93|       |XMLPUBFUN xmlChar *
+   94|       |                xmlStrncatNew            (const xmlChar *str1,
+   95|       |                                         const xmlChar *str2,
+   96|       |                                         int len);
+   97|       |XMLPUBFUN int
+   98|       |                xmlStrPrintf             (xmlChar *buf,
+   99|       |                                         int len,
+  100|       |                                         const char *msg,
+  101|       |                                         ...) LIBXML_ATTR_FORMAT(3,4);
+  102|       |XMLPUBFUN int
+  103|       |                xmlStrVPrintf                (xmlChar *buf,
+  104|       |                                         int len,
+  105|       |                                         const char *msg,
+  106|       |                                         va_list ap) LIBXML_ATTR_FORMAT(3,0);
+  107|       |
+  108|       |XMLPUBFUN int
+  109|       |        xmlGetUTF8Char                   (const unsigned char *utf,
+  110|       |                                         int *len);
+  111|       |XMLPUBFUN int
+  112|       |        xmlCheckUTF8                     (const unsigned char *utf);
+  113|       |XMLPUBFUN int
+  114|       |        xmlUTF8Strsize                   (const xmlChar *utf,
+  115|       |                                         int len);
+  116|       |XMLPUBFUN xmlChar *
+  117|       |        xmlUTF8Strndup                   (const xmlChar *utf,
+  118|       |                                         int len);
+  119|       |XMLPUBFUN const xmlChar *
+  120|       |        xmlUTF8Strpos                    (const xmlChar *utf,
+  121|       |                                         int pos);
+  122|       |XMLPUBFUN int
+  123|       |        xmlUTF8Strloc                    (const xmlChar *utf,
+  124|       |                                         const xmlChar *utfchar);
+  125|       |XMLPUBFUN xmlChar *
+  126|       |        xmlUTF8Strsub                    (const xmlChar *utf,
+  127|       |                                         int start,
+  128|       |                                         int len);
+  129|       |XMLPUBFUN int
+  130|       |        xmlUTF8Strlen                    (const xmlChar *utf);
+  131|       |XMLPUBFUN int
+  132|       |        xmlUTF8Size                      (const xmlChar *utf);
+  133|       |XMLPUBFUN int
+  134|       |        xmlUTF8Charcmp                   (const xmlChar *utf1,
+  135|       |                                         const xmlChar *utf2);
+  136|       |
+  137|       |#ifdef __cplusplus
+  138|       |}
+  139|       |#endif
+  140|       |#endif /* __XML_STRING_H__ */
+
+"Summary report:
+"
+Filename                       Regions    Missed Regions     Cover   Functions  Missed Functions  Executed       Lines      Missed Lines     Cover    Branches   Missed Branches     Cover
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+driver.c                            29                 5    82.76%           4                 0   100.00%          50                 4    92.00%          20                 5    75.00%
+
+Files which contain no functions:
+include/libxml/xmlstring.h           0                 0         -           0                 0         -           0                 0         -           0                 0         -
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+TOTAL                               29                 5    82.76%           4                 0   100.00%          50                 4    92.00%          20                 5    75.00%
