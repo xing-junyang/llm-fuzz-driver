@@ -1,8 +1,8 @@
 {
-    "project_name": "libxml2",
-    "target_name": "xmllint",
+    "project_name": "libpng",
+    "target_name": "pngread",
     "target_function": "main",
-    "target_file": "./targets/libxml2-2.13.4/xmllint.c",
+    "target_file": "./targets/libpng-1.6.29/pngread.c",
     "test_driver_model_code_path": "./prompt_generator/model.c",
     "max_iterations": 10,
     "compile_command": [
@@ -14,9 +14,11 @@
         "-fprofile-instr-generate",
         "-fcoverage-mapping",
         "-o",
-        "driver",
-        "driver.c",
-        "-I./include",
-        "./.libs/libxml2.a"
+        "fuzz_driver",
+        "xmllint_fuzz_driver.c",
+        "-I.",
+        "-L.",
+        "./.libs/libpng16.a",
+        "-lz"
     ]
 }

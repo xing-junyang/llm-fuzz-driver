@@ -1,8 +1,8 @@
 {
-    "project_name": "libxml2",
-    "target_name": "xmllint",
+    "project_name": "libpng",
+    "target_name": "djpeg",
     "target_function": "main",
-    "target_file": "./targets/libxml2-2.13.4/xmllint.c",
+    "target_file": "./targets/libjpeg-turbo-3.0.4/djpeg.c",
     "test_driver_model_code_path": "./prompt_generator/model.c",
     "max_iterations": 10,
     "compile_command": [
@@ -16,7 +16,7 @@
         "-o",
         "driver",
         "driver.c",
-        "-I./include",
-        "./.libs/libxml2.a"
+        "-I.",
+        "./libjpeg.a"
     ]
 }
