@@ -75,7 +75,7 @@ def validate_driver(driver_file_name: str) -> str:
         return "Runtime Error"
 
     # Step 4: Generate the coverage report using llvm-cov
-    coverage_report_path = 'outputs/temp/coverage/raw_coverage.txt'
+    coverage_report_path = current_file_path + '/../outputs/temp/coverage/raw_coverage.txt'
     if not os.path.exists(coverage_report_path):
         with open(coverage_report_path, 'w'):  # 创建一个空文件
             pass
