@@ -21,46 +21,46 @@ if __name__ == "__main__":
 
     for i in range(max_iterations):
         # prompt_generator
-        prompt = ""
-        if state == "init":
-            prompt = generate_gpt_prompt(filtered_api_info, project_name, target_name, test_driver_model_code_path)
-        elif state == "compile_err":
-            prompt = generate_compiler_error_prompt("outputs/temp/candidate_fuzz_drivers/raw.c", "outputs/temp/error_logs/raw_error_log.txt")
-        elif state == "low_cov":
-            # TODO: generate prompt for low coverage
-            pass
-
-        # llm_model
-        llm_response = generate_fuzz_driver_llm(prompt)
-
-        # candidate_generator
-        api_info = {
-            "required_headers": [], # TODO: customize required header files here
-        }
-        generator = CandidateGenerator()
-        driver_code = generator.generate_driver(llm_response, api_info)
-        # write the driver code to file: /outputs/temp/candidate_fuzz_drivers/raw.c
-        with open("outputs/temp/candidate_fuzz_drivers/raw.c", "w") as file:
-            file.write(driver_code)
+        # prompt = ""
+        # if state == "init":
+        #     prompt = generate_gpt_prompt(filtered_api_info, project_name, target_name, test_driver_model_code_path)
+        # elif state == "compile_err":
+        #     prompt = generate_compiler_error_prompt("outputs/temp/candidate_fuzz_drivers/raw.c", "outputs/temp/error_logs/raw_error_log.txt")
+        # elif state == "low_cov":
+        #     # TODO: generate prompt for low coverage
+        #     pass
+        #
+        # # llm_model
+        # llm_response = generate_fuzz_driver_llm(prompt)
+        #
+        # # candidate_generator
+        # api_info = {
+        #     "required_headers": [], # TODO: customize required header files here
+        # }
+        # generator = CandidateGenerator()
+        # driver_code = generator.generate_driver(llm_response, api_info)
+        # # write the driver code to file: /outputs/temp/candidate_fuzz_drivers/raw.c
+        # with open("outputs/temp/candidate_fuzz_drivers/raw.c", "w") as file:
+        #     file.write(driver_code)
 
         # validator
         driver_file_name = 'raw.c'
         result = validate_driver(driver_file_name)
 
         # check the result, perform refining if necessary
-        if result == "Valid Driver":
-            print("Driver generated successfully.")
-            # move the generated driver to the valid drivers directory '/outputs/validated_fuzz_drivers'
-            with open("outputs/validated_fuzz_drivers/valid_driver.c", "w") as file:
-                file.write(driver_code)
-            state = "success"
-            break
-        elif result == "Compilation Error":
-            print("Compilation error. Trying again...")
-            state = "compile_err"
-        elif result == "Low Coverage":
-            print("Low coverage. Trying again...")
-            state = "low_cov"
+        # if result == "Valid Driver":
+        #     print("Driver generated successfully.")
+        #     # move the generated driver to the valid drivers directory '/outputs/validated_fuzz_drivers'
+        #     with open("outputs/validated_fuzz_drivers/valid_driver.c", "w") as file:
+        #         file.write(driver_code)
+        #     state = "success"
+        #     break
+        # elif result == "Compilation Error":
+        #     print("Compilation error. Trying again...")
+        #     state = "compile_err"
+        # elif result == "Low Coverage":
+        #     print("Low coverage. Trying again...")
+        #     state = "low_cov"
 
     if state != "success":
         print("Failed to generate a valid driver in the given number of iterations.")

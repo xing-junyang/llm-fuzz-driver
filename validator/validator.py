@@ -24,10 +24,21 @@ def validate_driver(driver_file_name: str) -> str:
     log_file_path = '../outputs/temp/error_logs/raw_error_log.txt'
     driver_file_path = f'../outputs/temp/candidate_fuzz_drivers/{driver_file_name}'
     dir_path = os.path.dirname(log_file_path)
-    if not os.path.exists(dir_path):
-        os.makedirs(dir_path)
-    with open(log_file_path, 'w') as file:
-        file.write("")
+    try:
+        # 确保目录存在
+        if not os.path.exists(dir_path):
+            print(f"Directory {dir_path} does not exist. Creating...")
+            os.makedirs(dir_path, exist_ok=True)  # 确保安全创建
+        else:
+            print(f"Directory {dir_path} already exists.")
+
+        # 确保能够创建文件
+        with open(log_file_path, 'w') as file:
+            file.write("")
+            print(f"File {log_file_path} created and initialized.")
+
+    except Exception as e:
+        print(f"An error occurred: {e}")
 
     # Configure the logger
     logging.basicConfig(filename=log_file_path, level=logging.ERROR)
