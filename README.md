@@ -61,7 +61,7 @@ make
 echo 'libxml2 build done'
 ```
 
-Then, run the following command:
+After you set up, run the tool with the following command:
 
 ```bash
 python3 main.py <config_file_path> <prebuild_shell_path>
