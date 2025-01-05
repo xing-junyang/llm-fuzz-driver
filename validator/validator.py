@@ -22,7 +22,11 @@ def validate_driver(driver_file_path: str) -> str:
         - If the driver is valid, return `Valid Driver`.
     """
 
-    logging.basicConfig(filename='outputs/temp/error_logs/raw_error_log.txt', level=logging.ERROR)
+    log_file_path = 'outputs/temp/error_logs/raw_error_log.txt'
+    if not os.path.exists(log_file_path):
+        with open(log_file_path, 'w'):
+            pass
+    logging.basicConfig(filename=log_file_path, level=logging.ERROR)
 
     # Step 1: Check if the driver file exists and is not empty
     if not os.path.exists(driver_file_path):
@@ -54,6 +58,10 @@ def validate_driver(driver_file_path: str) -> str:
 
     # Step 4: Generate the coverage report using llvm-cov
     coverage_report_path = 'outputs/temp/coverage/raw_coverage.txt'
+    if not os.path.exists(coverage_report_path):
+        with open(coverage_report_path, 'w'):  # 创建一个空文件
+            pass
+
     try:
         with open(coverage_report_path, 'w') as report_file:
             subprocess.check_call([
