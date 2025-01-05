@@ -1,9 +1,12 @@
 import subprocess
 import logging
+import os
+
+# Ensure the directory exists
+os.makedirs('../outputs/temp/cov_log', exist_ok=True)
 
 # Configure logging
-logging.basicConfig(filename='coverage.log', level=logging.INFO, format='%(asctime)s - %(message)s')
-
+logging.basicConfig(filename='../outputs/temp/cov_log/coverage.log', level=logging.INFO, format='%(asctime)s - %(message)s')
 def check_coverage(file_path: str) -> bool:
     """
     Check whether the given coverage data satisfies the required threshold.
