@@ -32,14 +32,17 @@ def validate_driver(driver_file_path: str) -> str:
 
     # Step 2: Try to compile the driver code
     compile_command = [
-        "clang", "-g", "-fsanitize=fuzzer", "-fsanitize=address", "-std=c11", "-fprofile-instr-generate", "-fcoverage-mapping",
+        "clang", "-g", "-fsanitize=fuzzer", "-fsanitize=address", "-std=c11", "-fprofile-instr-generate",
+        "-fcoverage-mapping",
         "-o", "fuzz_driver", driver_file_path, "-I/usr/include/libxml2", "-L/usr/lib/x86_64-linux-gnu", "-lxml2"
     ]
-
     try:
         subprocess.check_call(compile_command)
     except subprocess.CalledProcessError as e:
+        # Capture the error message and log it
+        error_message = e.stderr.decode() if e.stderr else "No stderr output"
         logging.error(f"Compilation error for {driver_file_path}: {e}")
+        logging.error(f"Error details: {error_message}")
         return "Compilation Error"
 
     # Step 3: Try to run the driver code
