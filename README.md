@@ -11,13 +11,13 @@ Set the configuration in `config.json` file. An example configuration file (for 
 
 ```json
 {
-    "project_name": "libxml2", // The name of the project
-    "target_name": "xmllint", // The name of the target
-    "target_function": "main", // The name of the target function
-    "target_file": "./targets/libxml2-2.13.4/xmllint.c", // The path to the target file (after prebuild)
-    "test_driver_model_code_path": "./prompt_generator/model.c", // The path to the model code (default: ./prompt_generator/model.c)
-    "max_iterations": 10, // The maximum number of iterations
-    "compile_command": [  // The compile command
+    "project_name": "libxml2",
+    "target_name": "xmllint",
+    "target_function": "main",
+    "target_file": "./targets/libxml2-2.13.4/xmllint.c",
+    "test_driver_model_code_path": "./prompt_generator/model.c",
+    "max_iterations": 10,
+    "compile_command": [
         "clang",
         "-g",
         "-fsanitize=fuzzer",
@@ -35,7 +35,21 @@ Set the configuration in `config.json` file. An example configuration file (for 
 
 ```
 
-Prepare a prebuild shell script that builds the target and generates the prebuild files. An example prebuild shell 
+The meaning of each field is as follows:
+
+| Field                         | Description                                                        |
+|-------------------------------|--------------------------------------------------------------------|
+| `project_name`                | The name of the project                                            |
+| `target_name`                 | The name of the target                                             |
+| `target_function`             | The name of the target function                                    |
+| `target_file`                 | The path to the target file (after prebuild)                       |
+| `test_driver_model_code_path` | The path to the model code (default: `./prompt_generator/model.c`) |
+| `max_iterations`              | The maximum number of iterations                                   |
+| `compile_command`             | The compile command                                                |
+
+
+Then, prepare a prebuild shell script that builds the target and generates the prebuild files. An example prebuild 
+shell 
 script (for `libxml2/xmllint`) is as follows:
 
 ```bash
@@ -47,7 +61,7 @@ make
 echo 'libxml2 build done'
 ```
 
-Then, run the following command:
+After you set up, run the tool with the following command:
 
 ```bash
 python3 main.py <config_file_path> <prebuild_shell_path>
