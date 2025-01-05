@@ -96,4 +96,4 @@ tool **on runtime**. The directory structure is as follows:
             └── ...
 ```
 ## Demonstration Video
-Still under review. Link will be shown as soon as the video is uploaded in Bilibili
+[link](https://www.bilibili.com/video/BV1FaruYMEJy/?vd_source=15a16af321809f158275c13088f407a6)
