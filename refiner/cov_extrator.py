@@ -1,3 +1,4 @@
+
 # Check coverage and extract the coverage percentage from the report.
 
 def check_coverage(file_path: str) -> bool :

@@ -1,9 +1,11 @@
 import re
 
+from sympy.physics.units import degree
+
 from extractor.extractor import extract_interface_info
 
 # Define a list of excluded C library functions
-EXCLUDED_FUNCTIONS = {"strcmp", "fprintf", "malloc", "free", "memcpy", "strlen", "printf","endTimer","__errno_location"}
+EXCLUDED_FUNCTIONS = {"strcmp", "fprintf", "malloc", "free", "memcpy", "strlen", "printf","endTimer","__errno_location","(Anonymous Function)","fwrite","fread"}
 
 
 def extract_static_or_macro_functions(file_path):
@@ -90,7 +92,7 @@ def generate_gpt_prompt(interfaces, project_name, target, test_driver_model_code
     prompt += (
         "The test driver program should:\n"
         "1. Be compatible with LibFuzzer.\n"
-        "2. Test the following functions:\n\n"
+        "2. Test the following functions (excluding system call functions, standard input and output, etc. and well-tested library functions)\n\n"
     )
 
     # Add interface details
@@ -127,19 +129,55 @@ def generate_gpt_prompt(interfaces, project_name, target, test_driver_model_code
 
     return prompt
 
+def generate_compiler_error_prompt(driver_code, error_message_file_path):
+    """
+    Generate a GPT prompt to refine a fuzzing driver based on a compiler error.
+    Args:
+        driver_code (str): The original fuzzing driver code.
+        error_message_file_path (str): The file path containing the compiler error message.
+    Returns:
+        str: A GPT-friendly prompt for refining the driver.
+    """
+    try:
+        # Read the error message from the specified file
+        with open(error_message_file_path, 'r') as file:
+            error_message = file.read().strip()
+    except FileNotFoundError:
+        return f"Error: The file '{error_message_file_path}' does not exist."
+    except Exception as e:
+        return f"Error: An unexpected error occurred while reading the file: {e}"
+
+    # Generate the GPT-friendly prompt
+    prompt = (
+        "You are a code refinement assistant specializing in fuzzing drivers. "
+        "The user has provided a piece of C code intended to act as a fuzzing driver, "
+        "along with a compiler error message encountered during compilation. "
+        "Your task is to analyze the error message, identify the issues, and provide "
+        "corrected code that compiles successfully.\n\n"
+        "Here is the fuzzing driver code:\n"
+        f"```\n{driver_code}\n```\n\n"
+        "Here is the compiler error message:\n"
+        f"```\n{error_message}\n```\n\n"
+        "Please provide the following:\n"
+        "1. The corrected C code for the fuzzing driver.\n"
+        "Ensure that your explanation is clear and concise."
+    )
+    return prompt
+
+
 
 if __name__ == "__main__":
-    file_path = "../targets/libxml2-2.13.4/xmllint.c"
+    file_path = "../targets/libjpeg-turbo-3.0.4/djpeg.c"
     template_path = "test_driver_template.c"  # Path to the test driver template file
 
     # Extract the interfaces from the source file
     interfaces = extract_interface_info(file_path)
 
     # Filter out excluded functions
-    filtered_interfaces = filter_interfaces(interfaces,'../targets/libxml2-2.13.4/xmllint.c')
+    filtered_interfaces = filter_interfaces(interfaces,'../targets/libjpeg-turbo-3.0.4/djpeg.c')
 
     # Generate the GPT prompt
-    prompt = generate_gpt_prompt(filtered_interfaces, "libxml2-2.13.4", "xmllint", "fuzz_driver.c")
+    prompt = generate_gpt_prompt(filtered_interfaces, "libjepg-turbo-3.0.4", "djepg", "model.c")
 
     # Save to a file for inspection or further usage
     with open("gpt_prompt.txt", "w") as f:
