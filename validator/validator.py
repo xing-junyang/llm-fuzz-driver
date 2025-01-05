@@ -1,7 +1,5 @@
-# Validate the input driver. If the driver is valid, return True; otherwise, report the error and return False.
 import os
 import subprocess
-import logging
 
 from refiner.cov_extractor import check_coverage
 
@@ -24,8 +22,9 @@ def validate_driver(driver_file_name: str) -> str:
     log_file_path = '../outputs/temp/error_logs/raw_error_log.txt'
     driver_file_path = f'../outputs/temp/candidate_fuzz_drivers/{driver_file_name}'
     dir_path = os.path.dirname(log_file_path)
+
+    # 创建并初始化普通日志文件
     try:
-        # 确保目录存在
         if not os.path.exists(dir_path):
             print(f"Directory {dir_path} does not exist. Creating...")
             os.makedirs(dir_path, exist_ok=True)  # 确保安全创建
@@ -40,14 +39,16 @@ def validate_driver(driver_file_name: str) -> str:
     except Exception as e:
         print(f"An error occurred: {e}")
 
-    # Configure the logger
-    logging.basicConfig(filename='your_log_file.log', level=logging.ERROR, format='%(asctime)s - %(levelname)s - %(message)s')
-
     # Step 1: Check if the driver file exists and is not empty
     if not os.path.exists(driver_file_path):
-        raise FileNotFoundError(f"Driver file {driver_file_path} does not exist.")
+        with open(log_file_path, 'a') as log_file:
+            log_file.write(f"Driver file {driver_file_path} does not exist.\n")
+        return "Compilation Error"
+
     if os.path.getsize(driver_file_path) == 0:
-        raise ValueError(f"Driver file {driver_file_path} is empty.")
+        with open(log_file_path, 'a') as log_file:
+            log_file.write(f"Driver file {driver_file_path} is empty.\n")
+        return "Compilation Error"
 
     # Step 2: Try to compile the driver code
     compile_command = [
@@ -59,15 +60,17 @@ def validate_driver(driver_file_name: str) -> str:
         subprocess.check_output(compile_command, stderr=subprocess.STDOUT)  # 将stderr合并到stdout中
     except subprocess.CalledProcessError as e:
         error_message = e.output.decode() if e.output else "No output captured"
-        logging.error(f"Compilation error for {driver_file_path}: {e}")
-        logging.error(f"Error details: {error_message}")
+        with open(log_file_path, 'a') as log_file:
+            log_file.write(f"Compilation error for {driver_file_path}: {e}\n")
+            log_file.write(f"Error details: {error_message}\n")
         return "Compilation Error"
 
     # Step 3: Try to run the driver code
     try:
         subprocess.check_call(["./driver"])
     except subprocess.CalledProcessError as e:
-        logging.error(f"Runtime error for {driver_file_path}: {e}")
+        with open(log_file_path, 'a') as log_file:
+            log_file.write(f"Runtime error for {driver_file_path}: {e}\n")
         return "Runtime Error"
 
     # Step 4: Generate the coverage report using llvm-cov
@@ -83,22 +86,26 @@ def validate_driver(driver_file_name: str) -> str:
                 '-instr-profile=default.profdata'
             ], stdout=report_file)
     except subprocess.CalledProcessError as e:
-        logging.error(f"Coverage report generation failed for {driver_file_path}: {e}")
+        with open(log_file_path, 'a') as log_file:
+            log_file.write(f"Coverage report generation failed for {driver_file_path}: {e}\n")
         return "Coverage Generation Failed"
 
     # Step 5: Check if the coverage meets the required threshold
     try:
         coverage = check_coverage(coverage_report_path)
         if isinstance(coverage, str) and "Error" in coverage:
-            logging.error(f"Error extracting coverage for {driver_file_path}: {coverage}")
+            with open(log_file_path, 'a') as log_file:
+                log_file.write(f"Error extracting coverage for {driver_file_path}: {coverage}\n")
             return "Coverage Extraction Failed"
 
         if not coverage:
-            logging.error(f"Coverage is too low for {driver_file_path}: {coverage}%")
+            with open(log_file_path, 'a') as log_file:
+                log_file.write(f"Coverage is too low for {driver_file_path}: {coverage}%\n")
             return "Low Coverage"
 
     except Exception as e:
-        logging.error(f"Error while checking coverage for {driver_file_path}: {e}")
+        with open(log_file_path, 'a') as log_file:
+            log_file.write(f"Error while checking coverage for {driver_file_path}: {e}\n")
         return "Coverage Check Failed"
 
     return "Valid Driver"
