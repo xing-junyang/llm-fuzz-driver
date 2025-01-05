@@ -19,8 +19,9 @@ def validate_driver(driver_file_name: str) -> str:
         satisfies the required threshold. If the coverage is less than the threshold, return `Low Coverage`.
         - If the driver is valid, return `Valid Driver`.
     """
-    log_file_path = '../outputs/temp/error_logs/raw_error_log.txt'
-    driver_file_path = f'../outputs/temp/candidate_fuzz_drivers/{driver_file_name}'
+    current_file_path = os.path.dirname(os.path.abspath(__file__))
+    log_file_path = current_file_path + '/../outputs/temp/error_logs/raw_error_log.txt'
+    driver_file_path = current_file_path + f'/../outputs/temp/candidate_fuzz_drivers/{driver_file_name}'
     dir_path = os.path.dirname(log_file_path)
 
     # 创建并初始化普通日志文件
