@@ -15,14 +15,16 @@ def extract_coverage_percentage(file_path: str) -> str:
     """
     try:
         # Generate the coverage report using llvm-cov
-        llvm_cov_command = [
-            'llvm-cov', 'report', 'fuzz_driver', '-instr-profile', file_path
-        ]
-        result = subprocess.run(llvm_cov_command, capture_output=True, text=True, check=True)
+        # llvm_cov_command = [
+        #     'llvm-cov', 'report', 'fuzz_driver', '-instr-profile', file_path
+        # ]
+        # result = subprocess.run(llvm_cov_command, capture_output=True, text=True, check=True)
 
+        with open(file_path, 'r') as file:
+            result = file.read()
         # Parse the report to extract the coverage percentage
         coverage_line = None
-        for line in result.stdout.splitlines():
+        for line in result.splitlines():
             if "TOTAL" in line:
                 coverage_line = line
                 break
