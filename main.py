@@ -2,8 +2,6 @@ import json
 import os
 import sys
 
-from sympy.physics.units import current
-
 from candidate_generator.candidate_gen import CandidateGenerator
 from extractor.extractor import extract_interface_info
 from llm_model.llm_model import generate_fuzz_driver_llm
@@ -17,12 +15,12 @@ if __name__ == "__main__":
         sys.exit(1)
 
     # run the prebuild shell commands
-    # prebuild_shell_path = sys.argv[2]  # Path to the prebuild shell script
-    # if not os.path.exists(prebuild_shell_path):
-    #     print(f"Error: Prebuild shell script not found at {prebuild_shell_path}")
-    #     sys.exit(1)
-    # os.system(f"cd {os.path.dirname(prebuild_shell_path)}"
-    #           f"&& bash {os.path.basename(prebuild_shell_path)}")
+    prebuild_shell_path = sys.argv[2]  # Path to the prebuild shell script
+    if not os.path.exists(prebuild_shell_path):
+        print(f"Error: Prebuild shell script not found at {prebuild_shell_path}")
+        sys.exit(1)
+    os.system(f"cd {os.path.dirname(prebuild_shell_path)}"
+              f"&& bash {os.path.basename(prebuild_shell_path)}")
 
     # predefined variables
     json_file_path = sys.argv[1]  # Path to the json file containing the configuration
