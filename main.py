@@ -85,7 +85,7 @@ if __name__ == "__main__":
         if result == "Valid Driver":
             print("Driver generated successfully.")
             # move the generated driver to the valid drivers directory '/outputs/validated_fuzz_drivers'
-            with open("outputs/validated_fuzz_drivers/valid_driver.c", "w") as file:
+            with open(current_file_path + "/outputs/validated_fuzz_drivers/valid_driver.c", "w") as file:
                 file.write(driver_code)
             state = "success"
             break

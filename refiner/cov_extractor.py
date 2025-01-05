@@ -16,7 +16,7 @@ def check_coverage(file_path: str) -> bool:
     required_threshold = 80.0  # Example threshold
     return float(coverage_percentage) >= required_threshold
 
-def extract_coverage_percentage(file_path: str) -> str:
+def extract_coverage_percentage(file_path: str) -> float | str:
     """
     Extract the coverage percentage from the given coverage report, and return it.
     """
@@ -37,10 +37,20 @@ def extract_coverage_percentage(file_path: str) -> str:
                 break
 
         if coverage_line:
-            coverage_percentage = coverage_line.split()[3].replace('%', '')
+            coverage_percentage = (float(coverage_line.split()[3].replace('%', ''))
+                                + float(coverage_line.split()[6].replace('%', ''))
+                                + float(coverage_line.split()[9].replace('%', ''))
+                                + float(coverage_line.split()[12].replace('%', ''))) / 4
+
             return coverage_percentage
         else:
-            return "0.0"
+            return 0.0
 
     except Exception as e:
         return f"Error extracting coverage percentage: {str(e)}"
+
+
+if __name__ == "__main__":
+    file_path = "../outputs/temp/coverage/raw_coverage.txt"
+    coverage = extract_coverage_percentage(file_path)
+    print(f"Coverage: {coverage}")

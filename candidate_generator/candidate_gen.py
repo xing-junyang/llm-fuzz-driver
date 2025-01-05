@@ -102,7 +102,7 @@ static void cleanup() {
     // Add cleanup logic here
 }
 """
-        if(error_handling not in code):
+        if("CHECK_NULL" not in code):
             code =error_handling+"\n"+code
         return code
 
