@@ -30,7 +30,7 @@ def validate_driver(driver_file_name: str) -> str:
         file.write("")
 
     # Configure the logger
-    logging.basicConfig(filename=log_file_path, level=logging.ERROR)
+    logging.basicConfig(filename='your_log_file.log', level=logging.ERROR, format='%(asctime)s - %(levelname)s - %(message)s')
 
     # Step 1: Check if the driver file exists and is not empty
     if not os.path.exists(driver_file_path):
@@ -45,10 +45,9 @@ def validate_driver(driver_file_name: str) -> str:
         "-o", "fuzz_driver", driver_file_path, "-I/usr/include/libxml2", "-L/usr/lib/x86_64-linux-gnu", "-lxml2"
     ]
     try:
-        subprocess.check_call(compile_command)
+        subprocess.check_output(compile_command, stderr=subprocess.STDOUT)  # 将stderr合并到stdout中
     except subprocess.CalledProcessError as e:
-        # Capture the error message and log it
-        error_message = e.stderr.decode() if e.stderr else "No stderr output"
+        error_message = e.output.decode() if e.output else "No output captured"
         logging.error(f"Compilation error for {driver_file_path}: {e}")
         logging.error(f"Error details: {error_message}")
         return "Compilation Error"
