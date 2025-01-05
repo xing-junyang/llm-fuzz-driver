@@ -6,7 +6,7 @@
     "test_driver_model_code_path": "./prompt_generator/model.c",
     "max_iterations": 10,
     "compile_command": [
-        "clang",
+        "/usr/bin/clang",
         "-g",
         "-fsanitize=fuzzer",
         "-fsanitize=address",
