@@ -2,7 +2,8 @@
 
 def validate_driver(driver_file_path: str) -> str:
     """
-    Validate the input driver. If the driver is valid, return True; otherwise, report the error and return False.
+    Validate the input driver. Return `Valid Driver`, `Compilation Error`, or `Low Coverage` according to the
+    validation result.
 
     The procedure includes:
         - Check if the driver file exists and is not empty
