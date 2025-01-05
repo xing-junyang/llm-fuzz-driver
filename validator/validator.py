@@ -3,7 +3,7 @@ import subprocess
 
 from refiner.cov_extractor import check_coverage
 
-def validate_driver(driver_file_name: str) -> str:
+def validate_driver(driver_file_path: str, compile_command: list) -> str:
     """
     Validate the input driver. Return `Valid Driver`, `Compilation Error`, or `Low Coverage` according to the
     validation result.
@@ -21,7 +21,7 @@ def validate_driver(driver_file_name: str) -> str:
     """
     current_file_path = os.path.dirname(os.path.abspath(__file__))
     log_file_path = current_file_path + '/../outputs/temp/error_logs/raw_error_log.txt'
-    driver_file_path = current_file_path + f'/../outputs/temp/candidate_fuzz_drivers/{driver_file_name}'
+    # driver_file_path = current_file_path + f'/../outputs/temp/candidate_fuzz_drivers/{driver_file_name}'
     dir_path = os.path.dirname(log_file_path)
 
     # 创建并初始化普通日志文件
@@ -52,11 +52,11 @@ def validate_driver(driver_file_name: str) -> str:
         return "Compilation Error"
 
     # Step 2: Try to compile the driver code
-    compile_command = [
-        "clang", "-g", "-fsanitize=fuzzer", "-fsanitize=address", "-std=c11", "-fprofile-instr-generate",
-        "-fcoverage-mapping",
-        "-o", "fuzz_driver", driver_file_path, "-I/usr/include/libxml2", "-L/usr/lib/x86_64-linux-gnu", "-lxml2"
-    ]
+    # compile_command = [
+    #     "clang", "-g", "-fsanitize=fuzzer", "-fsanitize=address", "-std=c11", "-fprofile-instr-generate",
+    #     "-fcoverage-mapping",
+    #     "-o", "fuzz_driver", driver_file_path, "-I/usr/include/libxml2", "-L/usr/lib/x86_64-linux-gnu", "-lxml2"
+    # ]
     try:
         subprocess.check_output(compile_command, stderr=subprocess.STDOUT)  # 将stderr合并到stdout中
     except subprocess.CalledProcessError as e:
@@ -75,7 +75,7 @@ def validate_driver(driver_file_name: str) -> str:
         return "Runtime Error"
 
     # Step 4: Generate the coverage report using llvm-cov
-    coverage_report_path = 'outputs/temp/coverage/raw_coverage.txt'
+    coverage_report_path = current_file_path + '/../outputs/temp/coverage/raw_coverage.txt'
     if not os.path.exists(coverage_report_path):
         with open(coverage_report_path, 'w'):  # 创建一个空文件
             pass
