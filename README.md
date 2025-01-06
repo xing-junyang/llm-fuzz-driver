@@ -67,6 +67,17 @@ After you set up, run the tool with the following command:
 python3 main.py <config_file_path> <prebuild_shell_path>
 ```
 
+### Examples
+
+We provide three examples of configuration files and prebuild shell scripts along with the target files in the 
+`targets` directory. Here is the list of the examples:
+
+| Project & Target  | Configuration File              | Prebuild Shell Script           |
+|-------------------|---------------------------------|---------------------------------|
+| `libxml2/xmllint` | `./targets/libxml2_config.json` | `./targets/libxml2_prebuild.sh` |
+| `libjpeg/djpeg`   | `./targets/libjpeg_config.json` | `./targets/libjpeg_prebuild.sh` |
+| `libpng/readpng`  | `./targets/libpng_config.json`  | `./targets/libpng_prebuild.sh`  |
+
 ## Output Directory Structure
 
 The `outputs` directory is where the generated files are stored. The whole directory is automatically created by the 
@@ -80,20 +91,11 @@ tool **on runtime**. The directory structure is as follows:
     │   └── ...
     └── temp
         ├── candidate_fuzz_drivers
-        │   ├── raw.c
-        │   ├── mutant_1.c
-        │   ├── mutant_2.c
-        │   └── ...
+        │   └── raw.c
         ├── coverage
-        │   ├── raw_coverage.txt
-        │   ├── mutant_1_coverage.txt
-        │   ├── mutant_2_coverage.txt
-        │   └── ...
+        │   └── raw_coverage.txt
         └── error_log
-            ├── raw_error_log.txt
-            ├── mutant_1_error_log.txt
-            ├── mutant_2_error_log.txt
-            └── ...
+            └── raw_error_log.txt
 ```
 ## Demonstration Video
 [link](https://www.bilibili.com/video/BV1FaruYMEJy/?vd_source=15a16af321809f158275c13088f407a6)
