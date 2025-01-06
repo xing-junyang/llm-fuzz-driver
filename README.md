@@ -1,5 +1,9 @@
 # llm-fuzz-driver
-A LLM based fuzz-driver generation tool.
+**A LLM based fuzz-driver generation tool.** We use the LLM model to generate the code for the target driver and 
+then implemented a validator and refinement process to ensure the generated code is correct and efficient.
+
+The project is developed as a part of the course project for the course "Software Testing" at **Nanjing University**. 
+The whole project is under **MIT License**.
 
 ## Overall Structure
 
