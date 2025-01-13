@@ -7,5 +7,4 @@ targets/unzipped
 .gitignore
 /extractor/output.txt
 /targets
-*.c
 .idea/misc.xml
