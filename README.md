@@ -1,16 +1,15 @@
 # llm-fuzz-driver
-A LLM based fuzz-driver generation tool.
+**A LLM based fuzz-driver generation tool.** We use the LLM model to generate the code for the target driver and 
+then implemented a validator and refinement process to ensure the generated code is correct and efficient.
+
+The project is developed as a part of the course project for the course "Software Testing" at **Nanjing University**. 
+The whole project is under **MIT License**.
 
 ## Overall Structure
 
 ![structure](./structure.png)
 
 ## How to Run
-
-First, create an `.env` file in the root directory of the project. The `.env` file should contain the following fields:
-```bash
-OPENAI_API_KEY=<your_openai_api_key>
-```
 
 Set the configuration in `config.json` file. An example configuration file (for `libxml2/xmllint`) is as follows:
 
@@ -72,15 +71,16 @@ After you set up, run the tool with the following command:
 python3 main.py <config_file_path> <prebuild_shell_path>
 ```
 
-## Examples
+### Examples
 
-We provide three examples with configuration files and prebuild shell scripts. They are as follows:
+We provide three examples of configuration files and prebuild shell scripts along with the target files in the 
+`targets` directory. Here is the list of the examples:
 
-| Example Name And Target | Configuration File | Prebuild Shell Script | 
-|-------------------------|--------------------|-----------------------|
-| `libxml2/xmllint`       | `./targets/libxml2_config.json` | `./targets/libxml2_prebuild.sh` |
-| `libjpeg/djpeg`         | `./targets/libjpeg_config.json` | `./targets/libjpeg_prebuild.sh` |
-| `libpng/pngread`            | `./targets/libpng_config.json` | `./targets/libpng_prebuild.sh` |
+| Project & Target  | Configuration File              | Prebuild Shell Script           |
+|-------------------|---------------------------------|---------------------------------|
+| `libxml2/xmllint` | `./targets/libxml2_config.json` | `./targets/libxml2_prebuild.sh` |
+| `libjpeg/djpeg`   | `./targets/libjpeg_config.json` | `./targets/libjpeg_prebuild.sh` |
+| `libpng/readpng`  | `./targets/libpng_config.json`  | `./targets/libpng_prebuild.sh`  |
 
 ## Output Directory Structure
 
@@ -95,10 +95,11 @@ tool **on runtime**. The directory structure is as follows:
     │   └── ...
     └── temp
         ├── candidate_fuzz_drivers
-        │   └── raw.c  (raw candidate fuzz driver)
+        │   └── raw.c
         ├── coverage
-        │   └── raw_coverage.txt  (coverage of raw candidate fuzz driver)
+        │   └── raw_coverage.txt
         └── error_log
-            └── raw_error_log.txt  (error log of raw candidate fuzz driver)
+            └── raw_error_log.txt
 ```
-
+## Demonstration Video
+[link](https://www.bilibili.com/video/BV1FaruYMEJy/?vd_source=15a16af321809f158275c13088f407a6)
